@@ -36,6 +36,4 @@ pre-commit.exe
 *.mat
 
 # Images
-*.png
-*.jpg
 *.jpeg
