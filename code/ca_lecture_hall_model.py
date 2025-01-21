@@ -2,7 +2,9 @@ from enum import Enum
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import PillowWriter
 import random
+import os
 
 
 class Status(Enum):
@@ -189,6 +191,10 @@ class Grid:
             self.lecture_hall[i][j].set_status(Status.CLUELESS)
             self.lecture_hall[i][j].set_spreading_prob(np.random.uniform(0, 1))
 
+        # randomly set the initial spot
+        spreader_position = random.choice(selected_cells)
+        self.set_spreader(*spreader_position)
+
     def set_spreader(self, i, j):
         """
         Sets the status of the cell at position (i, j) to 'GOSSIP_SPREADER'.
@@ -274,17 +280,69 @@ class Grid:
 
         self.lecture_hall = new_lecture_hall
 
-    def show_grid(self):
+    def show_grid(self, iteration=None, save_path=None):
         """
         Displays the current state of the grid using `matplotlib`.
 
         Each cell's status is represented by an integer value corresponding to its status in the `Status` enum.
         A color map is used to visualize the different statuses of the cells.
 
-        Note:
-            This method uses `matplotlib` to display the grid and a color bar. It is primarily for testing and visualization purposes.
+        Parameters:
+            iteration (int, optional): The current iteration number, used for titles. Defaults to None.
+            save_path (str, optional): Path to save the current grid visualization. Defaults to None.
         """
+
         grid = [[cell.get_status().value for cell in row] for row in self.lecture_hall]
-        plt.imshow(grid)
-        plt.colorbar()  # TODO: remove and add a proper label, this is mainly for testing purposes
-        plt.show()
+
+        center_start, center_end = self.size // 4, 3 * self.size // 4
+        for i in range(center_start, center_end):
+            for j in range(center_start, center_end):
+                if grid[i][j] != Status.UNOCCUPIED.value:
+                    grid[i][j] += 0.5
+
+        plt.imshow(grid, cmap="coolwarm", interpolation="none")
+        plt.colorbar(label="Status")
+        if iteration is not None:
+            plt.title(f"Iteration {iteration}")
+        if save_path:
+            plt.savefig(save_path, dpi=150)
+        plt.close()
+
+
+def generate_gif(grid, steps=10, gif_name="spread_simulation.gif"):
+    """
+    Generates a GIF animation of the grid's spread simulation, saving all frames and the GIF to an external 'images' folder.
+
+    Parameters:
+        grid (Grid): An instance of the Grid class.
+        steps (int): Number of steps to simulate.
+        gif_name (str): Name of the output GIF file.
+    """
+    current_dir = os.getcwd()
+    parent_dir = os.path.dirname(current_dir)
+    images_dir = os.path.join(parent_dir, "images")
+    os.makedirs(images_dir, exist_ok=True)
+
+    frames = []
+
+    for step in range(steps):
+        fig_path = os.path.join(images_dir, f"frame_{step}.png")
+        grid.show_grid(iteration=step, save_path=fig_path)
+        frames.append(fig_path)
+        grid.update_grid()
+
+    gif_path = os.path.join(images_dir, gif_name)
+    writer = PillowWriter(fps=2)
+    fig = plt.figure()
+
+    writer.setup(fig, gif_path, dpi=100)
+    for frame in frames:
+        img = plt.imread(frame)
+        plt.imshow(img)
+        plt.axis("off")
+        writer.grab_frame()
+
+    writer.finish()
+
+    print(f"GIF saved to: {gif_path}")
+    print(f"All frames saved to: {images_dir}")
