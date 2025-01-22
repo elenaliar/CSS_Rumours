@@ -1,12 +1,15 @@
-from enum import Enum
 import copy
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.animation import PillowWriter
-import random
 import os
-from matplotlib import animation
+import random
+from enum import Enum
+
+import matplotlib.pyplot as plt
+import numpy as np
 from IPython.display import HTML
+from matplotlib import animation
+from matplotlib.animation import PillowWriter
+from matplotlib.colors import ListedColormap
+from matplotlib.patches import Patch, Rectangle
 
 
 class Status(Enum):
@@ -185,7 +188,8 @@ class Grid:
         self.spread_threshold = spread_threshold
 
     def set_initial_spreader(self, flag_center):
-        """Sets the initial spreader in the lecture hall grid.
+        """
+        Sets the initial spreader in the lecture hall grid.
 
         Parameters:
             flag_center (int):
@@ -194,7 +198,6 @@ class Grid:
             - If 0, the initial spreader is placed near the edges of the lecture hall, outside the central region.
         Raises:
             ValueError: If flag_center is not 0 or 1.
-
         """
         if flag_center not in [0, 1]:
             raise ValueError("flag_center must be 0 or 1")
@@ -364,9 +367,11 @@ class Grid:
         Stops itertaion if for 3 consecutive steps no cell status changes.
 
         Parameters:
-            steps (int): The number of steps to simulate.
+            steps (int): The maximum number of steps to simulate.
 
-        TODO
+        Returns:
+            list: A list of 2D grids, where each grid represents the state of the lecture hall
+                  at a given time step, including the initial state.
         """
         all_grids = [self.lecture_hall]
 
@@ -560,13 +565,58 @@ class Grid:
         ) and self.check_percolation_direction("horizontal")
 
 
-def show_lecture_hall_over_time(cell_grids, save_animation=False):
-    # First set up the figure, the axis, and the plot element we want to animate
-    init_grid = [[cell.get_status().value for cell in row] for row in cell_grids[0]]
-    fig = plt.figure()
-    # im = plt.imshow(init_grid, cmap="coolwarm", interpolation="none", animated=True)
-    im = plt.imshow(init_grid, cmap="coolwarm", interpolation="none", animated=True)
+def show_lecture_hall_over_time(
+    cell_grids, save_animation=False, animation_name="gossip_spread_simulation.mp4"
+):
+    """
+    Visualise the spread of a rumour over time using an animated grid and outlining the central region
 
+    Parameters:
+        cell_grids (list of list of list of Cell): List of lecture hall grids of cells, one grid for each time step.
+        save_animation (bool, optional): Whether to save the animation as an MP4 file. Default is False.
+        animation_name (str, optional): The name of the file to save the animation if `save_animation` is True.
+
+    Returns:
+            HTML: An HTML object containing the animation for rendering in Jupyter Notebook.
+    """
+    # Set up the figure and color map
+    init_grid = [[cell.get_status().value for cell in row] for row in cell_grids[0]]
+
+    fig = plt.figure()
+    colors = ["lightgray", "white", "gold", "goldenrod"]
+    cmap = ListedColormap(colors)
+
+    im = plt.imshow(init_grid, cmap=cmap, interpolation="none", animated=True)
+
+    # Add a square specifying the central 10x10 area
+    ax = plt.gca()
+    left_corner_coordinate = (len(init_grid[0]) // 4) - 0.5
+    square = Rectangle(
+        (left_corner_coordinate, left_corner_coordinate),
+        11,
+        11,
+        edgecolor="dimgray",
+        facecolor="none",
+        linewidth=2,
+    )
+    ax.add_patch(square)
+
+    # Add legend to the plot
+    legend_patches = [
+        Patch(
+            facecolor=color, edgecolor="black", label=f"State {i}"
+        )  # TODO: use the names of states instead of numbers
+        for i, color in enumerate(colors)
+    ]
+
+    plt.legend(
+        handles=legend_patches,
+        title="States",
+        loc="upper right",
+        bbox_to_anchor=(1.2, 1),
+    )
+
+    # Get the state number for each cell
     grids = [
         [[cell.get_status().value for cell in row] for row in cell_grid]
         for cell_grid in cell_grids
@@ -588,6 +638,6 @@ def show_lecture_hall_over_time(cell_grids, save_animation=False):
     # your system: for more information, see
     # http://matplotlib.sourceforge.net/api/animation_api.html
     if save_animation:
-        anim.save("basic_animation.mp4", fps=30, extra_args=["-vcodec", "libx264"])
+        anim.save(animation_name, fps=30, extra_args=["-vcodec", "libx264"])
 
     return HTML(anim.to_html5_video())
