@@ -37,3 +37,7 @@ pre-commit.exe
 
 # Images
 *.jpeg
+
+# Testing jupyter notebook
+code/testing.ipynb
+testing.ipynb
