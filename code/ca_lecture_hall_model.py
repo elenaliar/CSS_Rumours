@@ -167,6 +167,40 @@ class Grid:
         self.density = density
         self.spread_threshold = spread_threshold
 
+    def set_initial_spreader(self, flag_center):
+        '''Sets the initial spreader in the lecture hall grid.
+
+        Parameters:
+            flag_center (int): 
+            - If 1, the initial spreader is placed in the central subgrid of the lecture hall 
+              (approximately a square of size self.size/2 x self.size/2).
+            - If 0, the initial spreader is placed near the edges of the lecture hall, outside the central region.
+        Raises:
+            ValueError: If flag_center is not 0 or 1.
+
+        '''
+        if flag_center not in [0, 1]:
+            raise ValueError("flag_center must be 0 or 1")
+        
+        if flag_center == 1:
+            # Set the spreader in the central 10x10 subgrid
+            start = self.size // 4  # Start index for the 10x10 subgrid
+            end = 3 * (self.size // 4)  # End index for the 10x10 subgrid
+            initial_spreader_i = random.randint(start, end - 1)
+            initial_spreader_j = random.randint(start, end - 1)
+        else:
+            # Set the spreader outside the central subgrid
+            # Randomly choose a row/column outside of the central block
+            initial_spreader_i = random.choice([0, self.size - 1])
+            initial_spreader_j = random.choice([0, self.size - 1])
+
+            # Ensure the spreader is outside the 10x10 region
+            while (self.size // 4 <= initial_spreader_i < 3 * (self.size // 4)) and (self.size // 4 <= initial_spreader_j < 3 * (self.size // 4)):
+                initial_spreader_i = random.choice([0, self.size - 1])
+                initial_spreader_j = random.choice([0, self.size - 1])
+                
+        self.lecture_hall[initial_spreader_i][initial_spreader_j].set_status(Status.GOSSIP_SPREADER)
+
     def initialize_board(self):
         """
         Initializes the grid as fully unoccupied, and randomly selects some cells to be filled as clueless.
@@ -191,9 +225,8 @@ class Grid:
             self.lecture_hall[i][j].set_status(Status.CLUELESS)
             self.lecture_hall[i][j].set_spreading_prob(np.random.uniform(0, 1))
 
-        # randomly set the initial spot
-        spreader_position = random.choice(selected_cells)
-        self.set_spreader(*spreader_position)
+        # set initial spot, flag=1 for center, 0 for outside
+        self.set_initial_spreader(1)
 
     def set_spreader(self, i, j):
         """
@@ -303,6 +336,36 @@ class Grid:
         if iteration is not None:
             plt.title(f"Iteration {iteration}")
         plt.show()
+
+    def run_simulation(self, steps=1000):
+        """
+        Runs the simulation for a specified number of steps, updating the grid at each iteration. 
+        Stops itertaion if for 3 consecutive steps no cell status changes.
+
+        Parameters:
+            steps (int): The number of steps to simulate.
+        """
+        same = 0
+        prev_grid  = None
+        for i in range(steps):
+            current_grid = copy.deepcopy(self.lecture_hall)
+
+            #check if grid is same as previous grid
+            if prev_grid is not None and prev_grid == current_grid:
+                same += 1
+            else:
+                same = 0
+            
+            #stop simulation if no cell status changed for 3 consecutive steps
+            if same == 3:
+                print(f"Simulation stopped at step {i} as no cell status changed for 3 consecutive steps.")
+                break
+
+            #update the grid and display it
+            self.update_grid()
+            self.show_grid(iteration=i)
+
+            prev_grid = current_grid
 
     def save_grid(self, iteration=None, save_path=None):
         """
