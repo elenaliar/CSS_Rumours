@@ -363,7 +363,11 @@ class Grid:
 
         Parameters:
             steps (int): The number of steps to simulate.
+
+        TODO
         """
+        all_grids = [self.lecture_hall]
+
         same = 0
         prev_grid = None
         for i in range(steps):
@@ -384,9 +388,11 @@ class Grid:
 
             # update the grid and display it
             self.update_grid()
-            self.show_grid(iteration=i)
 
             prev_grid = current_grid
+            all_grids.append(self.lecture_hall)
+
+        return all_grids
 
     def save_grid(self, iteration=None, save_path=None):
         """
