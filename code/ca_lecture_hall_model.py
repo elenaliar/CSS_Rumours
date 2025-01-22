@@ -155,6 +155,7 @@ class Grid:
         run_simulation(steps): Runs the simulation for a given number of steps.
         save_grid(iteration, save_path): Saves the current grid into a given filepath including the iteration number in the title.
         generate_gif(steps, gif_name): Runs the simulation for given number of steps and saves it as a gif.
+        check_percolation(): Checks whether percolation happens in both directions and returns either True or False.
     """
 
     def __init__(self, size, density, spread_threshold):
@@ -545,7 +546,7 @@ class Grid:
         Checks if percolation occurs in the grid by checking for vertical and horizontal percolation.
 
         Returns:
-            bool: True if either vertical or horizontal percolation occurs, False otherwise.
+            bool: True if both vertical and horizontal percolation occurs, False otherwise.
         """
         return self.check_percolation_direction(
             "vertical"
