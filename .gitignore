@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+*.ipynb_checkpoints*
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# UV specific
+uv.exe
+uvx.exe
+
+# Pre-commit
+pre-commit.exe
+
+# Ruff
+.ruff_cache/
+
+# Data files (modify as needed)
+*.csv
+*.xlsx
+*.xls
+*.mat
+
+# Images
+*.jpeg
