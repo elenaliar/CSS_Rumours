@@ -475,7 +475,8 @@ class Grid:
             or j < 0
             or j >= self.size
             or visited[i][j]
-            or self.lecture_hall[i][j].get_status() != Status.GOSSIP_SPREADER
+            or self.lecture_hall[i][j].get_status()
+            not in [Status.GOSSIP_SPREADER, Status.SECRET_KEEPER]
         ):
             return False
 
@@ -515,7 +516,8 @@ class Grid:
             # start DFS from any occupied cell in the top row (row 0)
             for j in range(self.size):
                 if (
-                    self.lecture_hall[0][j].get_status() == Status.GOSSIP_SPREADER
+                    self.lecture_hall[0][j].get_status()
+                    in [Status.GOSSIP_SPREADER, Status.SECRET_KEEPER]
                     and not visited[0][j]
                 ):
                     print(j)
@@ -530,7 +532,8 @@ class Grid:
             # start DFS from any occupied cell in the leftmost column (column 0)
             for i in range(self.size):
                 if (
-                    self.lecture_hall[i][0].get_status() == Status.GOSSIP_SPREADER
+                    self.lecture_hall[i][0].get_status()
+                    in [Status.GOSSIP_SPREADER, Status.SECRET_KEEPER]
                     and not visited[i][0]
                 ):
                     if self.dfs(
