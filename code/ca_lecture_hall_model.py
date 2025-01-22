@@ -124,6 +124,14 @@ class Cell:
 
         self.spreading_prob = spreading_prob
 
+    def __eq__(self, value):
+        """
+        Check if two cells are equal based on their status and spreading probability.
+        """
+        if isinstance(value, Cell):
+            return self.status == value.status and self.spreading_prob == value.spreading_prob
+        return False
+
 
 class Grid:
     """
