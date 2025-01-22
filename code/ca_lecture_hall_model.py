@@ -446,3 +446,81 @@ class Grid:
 
         print(f"GIF saved to: {gif_path}")
         print(f"All frames saved to: {images_dir}")
+
+    def dfs(self, visited, i, j, target_row=None, target_col=None):
+        """
+        Performs a Depth-First Search (DFS) to explore a cluster of connected cells in the grid.
+
+        This function recursively visits all connected cells, checking all four neighbors (up, down, left, and right)
+        for connectivity. It will stop when all possible cells in the cluster have been visited.
+
+        Parameters:
+            i (int): The row index of the current cell to start the DFS from.
+            j (int): The column index of the current cell to start the DFS from.
+            target_row (int, optional): The row index we are trying to reach (for vertical percolation).
+            target_col (int, optional): The column index we are trying to reach (for horizontal percolation).
+
+        Returns:
+            bool: True if we have reached the target row or column (i.e., percolation has occurred), False otherwise.
+        """
+        #check if the current cell is within bounds, is not visited, and is occupied
+        if i < 0 or i >= self.size or j < 0 or j >= self.size or visited[i][j] or self.lecture_hall[i][j].get_status() != Status.GOSSIP_SPREADER:
+            return False
+        
+        #mark this cell as visited
+        visited[i][j] = True
+        
+        #if we've reached the target row or column, return True (percolation occurred)
+        if (target_row is not None and i == target_row) or (target_col is not None and j == target_col):
+            return True
+        
+        #explore all four possible neighbors: down, up, right, left
+        return (self.dfs(visited, i + 1, j, target_row, target_col) or
+                self.dfs(visited, i - 1, j, target_row, target_col) or
+                self.dfs(visited, i, j + 1, target_row, target_col) or
+                self.dfs(visited, i, j - 1, target_row, target_col))
+
+    
+    def check_percolation_direction(self, direction):
+        """
+        Checks if percolation occurs in the grid in a given direction (vertical or horizontal).
+
+        Parameters:
+            direction (str): The direction to check for percolation. Can be either 'vertical' or 'horizontal'.
+
+        Returns:
+            bool: True if percolation occurs in the specified direction, False otherwise.
+
+        Raises:
+            ValueError: If the direction is not 'vertical' or 'horizontal'.
+        """
+        if direction == "vertical":
+            visited = [[False for _ in range(self.size)] for _ in range(self.size)]
+        
+            #start DFS from any occupied cell in the top row (row 0)
+            for j in range(self.size):
+                if self.lecture_hall[0][j].get_status() == Status.GOSSIP_SPREADER and not visited[0][j]:
+                    print(j)
+                    if self.dfs(visited, 0, j, target_row=self.size-1):  # Target row is the last row
+                        return True
+            return False
+        elif direction == "horizontal":
+            visited = [[False for _ in range(self.size)] for _ in range(self.size)]
+        
+            #start DFS from any occupied cell in the leftmost column (column 0)
+            for i in range(self.size):
+                if self.lecture_hall[i][0].get_status() == Status.GOSSIP_SPREADER and not visited[i][0]:
+                    if self.dfs(visited, i, 0, target_col=self.size-1):  #target column is the last column
+                        return True
+            return False
+        else:
+            raise ValueError("direction must be either 'vertical' or 'horizontal'")
+    
+    def check_percolation(self):
+        """
+        Checks if percolation occurs in the grid by checking for vertical and horizontal percolation.
+
+        Returns:
+            bool: True if either vertical or horizontal percolation occurs, False otherwise.
+        """
+        return self.check_percolation_direction("vertical") and self.check_percolation_direction("horizontal")
