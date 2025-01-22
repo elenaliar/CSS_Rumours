@@ -14,8 +14,8 @@ class Status(Enum):
 
     UNOCCUPIED = 0
     CLUELESS = 1
-    GOSSIP_SPREADER = 2
-    SECRET_KEEPER = 3
+    SECRET_KEEPER = 2
+    GOSSIP_SPREADER = 3
 
 
 class Cell:
@@ -129,7 +129,10 @@ class Cell:
         Check if two cells are equal based on their status and spreading probability.
         """
         if isinstance(value, Cell):
-            return self.status == value.status and self.spreading_prob == value.spreading_prob
+            return (
+                self.status == value.status
+                and self.spreading_prob == value.spreading_prob
+            )
         return False
 
 
