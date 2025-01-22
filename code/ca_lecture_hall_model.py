@@ -129,7 +129,10 @@ class Cell:
         Check if two cells are equal based on their status and spreading probability.
         """
         if isinstance(value, Cell):
-            return self.status == value.status and self.spreading_prob == value.spreading_prob
+            return (
+                self.status == value.status
+                and self.spreading_prob == value.spreading_prob
+            )
         return False
 
 
@@ -151,6 +154,7 @@ class Grid:
         show_grid(): Displays the current state of the grid using `matplotlib`.
         run_simulation(steps): Runs the simulation for a given number of steps.
         save_grid(iteration, save_path): Saves the current grid into a given filepath including the iteration number in the title.
+        generate_gif(steps, gif_name): Runs the simulation for given number of steps and saves it as a gif.
     """
 
     def __init__(self, size, density, spread_threshold):
