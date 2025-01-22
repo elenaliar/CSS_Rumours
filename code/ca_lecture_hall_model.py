@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import PillowWriter
 import random
 import os
+import glob
 
 
 class Status(Enum):
@@ -415,7 +416,8 @@ class Grid:
 
     def generate_gif(self, steps=10, gif_name="spread_simulation.gif"):
         """
-        Generates a GIF animation of the grid's spread simulation, saving all frames and the GIF to an external 'images' folder.
+        Generates a GIF animation of the grid's spread simulation, saving all frames and the GIF to the 'images' folder.
+        Clears the 'images' folder before generating new files to avoid mixing old and new outputs.
 
         Parameters:
             steps (int): Number of steps to simulate.
@@ -424,7 +426,12 @@ class Grid:
         current_dir = os.getcwd()
         parent_dir = os.path.dirname(current_dir)
         images_dir = os.path.join(parent_dir, "images")
+
         os.makedirs(images_dir, exist_ok=True)
+
+        # Clear the images folder
+        for file_path in glob.glob(os.path.join(images_dir, "*")):
+            os.remove(file_path)
 
         frames = []
 
