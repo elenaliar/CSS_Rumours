@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import PillowWriter
 import random
 import os
+from matplotlib import animation
+from IPython.display import HTML
 
 
 class Status(Enum):
@@ -524,7 +526,6 @@ class Grid:
                     self.lecture_hall[0][j].get_status() == Status.GOSSIP_SPREADER
                     and not visited[0][j]
                 ):
-                    print(j)
                     if self.dfs(
                         visited, 0, j, target_row=self.size - 1
                     ):  # Target row is the last row
@@ -557,3 +558,36 @@ class Grid:
         return self.check_percolation_direction(
             "vertical"
         ) and self.check_percolation_direction("horizontal")
+
+
+def show_lecture_hall_over_time(cell_grids, save_animation=False):
+    # First set up the figure, the axis, and the plot element we want to animate
+    init_grid = [[cell.get_status().value for cell in row] for row in cell_grids[0]]
+    fig = plt.figure()
+    # im = plt.imshow(init_grid, cmap="coolwarm", interpolation="none", animated=True)
+    im = plt.imshow(init_grid, cmap="coolwarm", interpolation="none", animated=True)
+
+    grids = [
+        [[cell.get_status().value for cell in row] for row in cell_grid]
+        for cell_grid in cell_grids
+    ]
+
+    # animation function. This is called sequentially
+    def animate(i):
+        im.set_array(grids[i])
+        return (im,)
+
+    # call the animator.  blit=True means only re-draw the parts that have changed.
+    anim = animation.FuncAnimation(
+        fig, animate, frames=len(grids), interval=200, blit=True
+    )
+
+    # save the animation as an mp4.  This requires ffmpeg or mencoder to be
+    # installed.  The extra_args ensure that the x264 codec is used, so that
+    # the video can be embedded in html5.  You may need to adjust this for
+    # your system: for more information, see
+    # http://matplotlib.sourceforge.net/api/animation_api.html
+    if save_animation:
+        anim.save("basic_animation.mp4", fps=30, extra_args=["-vcodec", "libx264"])
+
+    return HTML(anim.to_html5_video())
