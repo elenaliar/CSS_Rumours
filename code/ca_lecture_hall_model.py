@@ -388,9 +388,6 @@ class Grid:
 
             # stop simulation if no cell status changed for 3 consecutive steps
             if same == 3:
-                print(
-                    f"Simulation stopped at step {i} as no cell status changed for 3 consecutive steps."
-                )
                 break
 
             # update the grid and display it
