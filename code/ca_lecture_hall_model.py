@@ -188,8 +188,7 @@ class Grid:
         self.spread_threshold = spread_threshold
 
     def set_initial_spreader(self, flag_center):
-        """
-        Sets the initial spreader in the lecture hall grid.
+        """Sets the initial spreader in the lecture hall grid.
 
         Parameters:
             flag_center (int):
@@ -198,6 +197,7 @@ class Grid:
             - If 0, the initial spreader is placed near the edges of the lecture hall, outside the central region.
         Raises:
             ValueError: If flag_center is not 0 or 1.
+
         """
         if flag_center not in [0, 1]:
             raise ValueError("flag_center must be 0 or 1")
@@ -364,23 +364,38 @@ class Grid:
     def run_simulation(self, steps=1000):
         """
         Runs the simulation for a specified number of steps, updating the grid at each iteration.
-        Stops itertaion if for 3 consecutive steps no cell status changes.
+        Stops iteration if no cell status changes for 3 consecutive steps.
 
         Parameters:
-            steps (int): The maximum number of steps to simulate.
+            steps (int): The number of steps to simulate.
 
         Returns:
-            list: A list of 2D grids, where each grid represents the state of the lecture hall
-                  at a given time step, including the initial state.
+            (list, dict): A tuple containing a list of 2D grids, where each grid represents the state of the lecture hall
+                  at a given time step, including the initial state and a dictionary containing the counts of each status over iterations.
+        TODO -- clean up return
         """
         all_grids = [self.lecture_hall]
 
         same = 0
         prev_grid = None
-        for i in range(steps):
+
+        status_counts = {
+            "UNOCCUPIED": [],
+            "CLUELESS": [],
+            "SECRET_KEEPER": [],
+            "GOSSIP_SPREADER": [],
+        }
+
+        for step in range(steps):
+            new_counts = {
+                "UNOCCUPIED": 0,
+                "CLUELESS": 0,
+                "SECRET_KEEPER": 0,
+                "GOSSIP_SPREADER": 0,
+            }
             current_grid = copy.deepcopy(self.lecture_hall)
 
-            # check if grid is same as previous grid
+            # check if grid is the same as the previous grid
             if prev_grid is not None and prev_grid == current_grid:
                 same += 1
             else:
@@ -390,13 +405,31 @@ class Grid:
             if same == 3:
                 break
 
-            # update the grid and display it
+            # count statuses
+            for i in range(self.size):
+                for j in range(self.size):
+                    cell_status = self.lecture_hall[i][j].get_status()
+                    if cell_status == Status.UNOCCUPIED:
+                        new_counts["UNOCCUPIED"] += 1
+                    elif cell_status == Status.CLUELESS:
+                        new_counts["CLUELESS"] += 1
+                    elif cell_status == Status.SECRET_KEEPER:
+                        new_counts["SECRET_KEEPER"] += 1
+                    elif cell_status == Status.GOSSIP_SPREADER:
+                        new_counts["GOSSIP_SPREADER"] += 1
+
+            status_counts["UNOCCUPIED"].append(new_counts["UNOCCUPIED"])
+            status_counts["CLUELESS"].append(new_counts["CLUELESS"])
+            status_counts["SECRET_KEEPER"].append(new_counts["SECRET_KEEPER"])
+            status_counts["GOSSIP_SPREADER"].append(new_counts["GOSSIP_SPREADER"])
+
+            # update the grid
             self.update_grid()
 
             prev_grid = current_grid
             all_grids.append(self.lecture_hall)
 
-        return all_grids
+        return all_grids, status_counts
 
     def save_grid(self, iteration=None, save_path=None):
         """
