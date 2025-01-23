@@ -671,3 +671,249 @@ def show_lecture_hall_over_time(
         anim.save(animation_name, fps=30, extra_args=["-vcodec", "libx264"])
 
     return HTML(anim.to_html5_video())
+
+
+def calculate_cluster_size_distribution(grids):
+    """
+    Calculates the size distribution of connected clusters of cells with the specified status 
+    across multiple simulation grids (Grid objects).
+
+    Parameters:
+        grids (list of Grid): A list of Grid objects from different simulations.
+        target_status (Status): The status of the cells to include in the cluster size calculation.
+
+    Returns:
+        dict: A dictionary where keys are cluster sizes and values are the total number of clusters
+              of that size across all grids.
+    """
+    
+    def dfs_size(grid, visited, i, j):
+        """
+        Performs a Depth-First Search (DFS) to explore a cluster of connected cells in the grid.
+
+        This function recursively visits all connected cells, checking all four neighbors (up, down, left, and right)
+        for connectivity. It will stop when all possible cells in the cluster have been visited.
+
+        Parameters:
+            i (int): The row index of the current cell to start the DFS from.
+            j (int): The column index of the current cell to start the DFS from.
+            target_row (int, optional): The row index we are trying to reach (for vertical percolation).
+            target_col (int, optional): The column index we are trying to reach (for horizontal percolation).
+
+        Returns:
+            int: The size of the cluster of connected cells.
+        """
+        # Check if the current cell is within bounds, is not visited, and is occupied
+        if (
+            i < 0
+            or i >= grid.size
+            or j < 0
+            or j >= grid.size
+            or visited[i][j]
+            or grid.lecture_hall[i][j].get_status() != Status.GOSSIP_SPREADER
+        ):
+            return 0  # Return 0 if the current cell is invalid or already visited
+
+        # Mark this cell as visited
+        visited[i][j] = True
+
+        # Initialize the size of the cluster with this cell
+        cluster_size = 1
+
+        # Explore all four possible neighbors: down, up, right, left
+        cluster_size += dfs_size(grid, visited, i + 1, j)  # Down
+        cluster_size += dfs_size(grid, visited, i - 1, j)  # Up
+        cluster_size += dfs_size(grid, visited, i, j + 1)  # Right
+        cluster_size += dfs_size(grid, visited, i, j - 1)  # Left
+
+        return cluster_size
+
+    cluster_sizes = []
+
+    for grid in grids:
+        size = grid.size
+        visited = [[False for _ in range(size)] for _ in range(size)]
+
+        # Iterate through the grid to find clusters
+        for i in range(size):
+            for j in range(size):
+                if not visited[i][j] and grid.lecture_hall[i][j].get_status() == Status.GOSSIP_SPREADER:
+                    cluster_size = dfs_size(grid, visited, i, j)
+                    if cluster_size > 0:
+                        cluster_sizes.append(cluster_size)
+
+    # Calculate the size distribution
+    cluster_distribution = {}
+    for size in cluster_sizes:
+        if size in cluster_distribution:
+            cluster_distribution[size] += 1
+        else:
+            cluster_distribution[size] = 1
+
+    return cluster_distribution
+
+
+def plot_log_log_distribution(cluster_distribution, density, spread_threshold, color):
+    """
+    Plots the log-log graph of cluster size distribution.
+
+    Parameters:
+        cluster_distribution (dict): A dictionary where keys are cluster sizes and values
+                                     are the frequencies of those sizes.
+        density (float): The density used in the simulation.
+        spread_threshold (float): The spread threshold used in the simulation.
+        color (str): The color for plotting the curve.
+    """
+    #get the data for the log-log plot
+    cluster_sizes = list(cluster_distribution.keys())
+    frequencies = list(cluster_distribution.values())
+
+    #apply logarithmic transformation
+    log_sizes = np.log10(cluster_sizes)
+    log_frequencies = np.log10(frequencies)
+
+    #plot the log-log graph
+    plt.plot(log_sizes, log_frequencies, color=color, label=f'Density={density}, Spread ={spread_threshold}', marker='.', linestyle='none')
+
+
+
+def run_multiple_simulations_same_initial_conditions(num_simulations, grid_size, density, spread_threshold, steps=100):
+    """
+    Runs multiple simulations with the same initial conditions (same grid size, density, and spreading threshold)
+    and calculates the cluster size distribution for each simulation.
+
+    Parameters:
+        num_simulations (int): The number of simulations to run.
+        grid_size (int): The size of the grid (e.g., number of rows and columns).
+        density (float): The fraction of cells initially occupied.
+        spread_threshold (float): The threshold probability for a cell to become a gossip spreader.
+        steps(int): The number of steps for each simulation.
+
+    Returns:
+        list of dict: A list of cluster size distributions (one for each simulation).
+    """
+    cluster_distributions = []
+    
+    #run multiple simulations
+    for _ in range(num_simulations):
+        #create and initialize the grid
+        grid = Grid(size=grid_size, density=density, spread_threshold=spread_threshold)
+        grid.initialize_board()
+
+        #run the simulation 
+        grid.run_simulation(steps=steps)
+
+        #calculate the cluster size distribution for the current grid
+        cluster_distribution = calculate_cluster_size_distribution([grid])
+        cluster_distributions.append(cluster_distribution)
+    
+    #return the list of cluster distributions from all simulations
+    return cluster_distributions
+
+
+def aggregate_cluster_distributions(cluster_distributions):
+    """
+    Aggregates multiple cluster size distributions into a single distribution.
+
+    Parameters:
+        cluster_distributions (list of dict): A list of list of dictionaries where each dictionary 
+                                              represents a cluster size distribution. 
+                                              Keys are cluster sizes (int), and values are 
+                                              their corresponding frequencies (int).
+
+    Returns:
+        dict: A single aggregated cluster size distribution. Keys are cluster sizes (int), 
+              and values are the total frequencies (int) across all input distributions.
+    """
+    aggregated_distribution = {}
+    #turn the list of list of dictionaries into a flat list of dictionaries
+    flat_distributions = [
+        distribution
+        for sublist in cluster_distributions
+        if isinstance(sublist, list)
+        for distribution in sublist
+    ]
+    for distribution in flat_distributions:
+        for size, count in distribution.items():
+            if size in aggregated_distribution:
+                aggregated_distribution[size] += count
+            else:
+                aggregated_distribution[size] = count
+    return aggregated_distribution
+
+
+def aggregate_and_plot_cluster_distributions(aggregated_distributions, grid_size, labels):
+    """
+    Plots the log-log graph of multiple aggregated cluster size distributions.
+
+    Parameters:
+        aggregated_distributions (list of dict): A list of aggregated cluster size distributions.
+                                                 Each dictionary represents a cluster size distribution
+                                                 with keys as cluster sizes (int) and values as their
+                                                 corresponding frequencies (int).
+        grid_size (int): The size of the grid used in the simulations.
+        labels (list of str): A list of labels corresponding to each aggregated cluster distribution,
+                              describing the conditions under which the data was generated (e.g.,
+                              "Density=0.3, Threshold=0.2").
+    
+    Returns:
+        None: Displays the log-log plot of the cluster size distributions.
+    """
+    plt.figure(figsize=(10, 8))
+
+    #plot each aggregated distribution with its label
+    for distribution, label in zip(aggregated_distributions, labels):
+        cluster_sizes = list(distribution.keys())
+        frequencies = list(distribution.values())
+
+        #log transformation
+        log_sizes = np.log10(cluster_sizes)
+        log_frequencies = np.log10(frequencies)
+
+        plt.plot(log_sizes, log_frequencies, marker=".", linestyle="none", label=label)
+
+    #plot settings
+    plt.title(f"Log-Log Plot of Cluster Size Distributions (Grid={grid_size}x{grid_size})", fontsize=14)
+    plt.xlabel("Log10(Cluster Size)", fontsize=12)
+    plt.ylabel("Log10(Frequency)", fontsize=12)
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+def simulate_and_plot_gossip_model_all_combinations(grid_size, densities, spread_thresholds, num_simulations):
+    """
+    Runs multiple simulations for all combinations of densities and spread thresholds,
+    aggregates the results, and plots the log-log distributions.
+
+    Parameters:
+        simulation_function (function): A function that runs the gossip model simulation and returns a cluster size distribution.
+        grid_size (int): The size of the grid for the simulations.
+        densities (list): A list of densities to simulate.
+        spread_thresholds (list): A list of spread thresholds to simulate.
+        num_simulations (int): The number of simulations to run for each set of initial conditions.
+    """
+    # Store aggregated cluster distributions and labels
+    all_aggregated_distributions = []
+    labels = []
+
+    # Iterate over all combinations of densities and spread thresholds
+    for density in densities:
+        for spread_threshold in spread_thresholds:
+            print(f"Running simulations for Density={density}, Spread Threshold={spread_threshold}...")
+
+            # Run multiple simulations for this parameter set
+            cluster_distributions = []
+            cluster_distribution = run_multiple_simulations_same_initial_conditions(num_simulations, grid_size, density, spread_threshold)
+            cluster_distributions.append(cluster_distribution)
+
+            # Aggregate the cluster size distributions
+            aggregated_distribution = aggregate_cluster_distributions(cluster_distributions)
+            all_aggregated_distributions.append(aggregated_distribution)
+
+            # Create a label for this parameter combination
+            labels.append(f"Density={density}, Threshold={spread_threshold}")
+
+    # Plot all aggregated distributions on the same log-log graph
+    aggregate_and_plot_cluster_distributions(all_aggregated_distributions, grid_size, labels)
+
+
