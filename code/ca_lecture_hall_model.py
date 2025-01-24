@@ -46,15 +46,18 @@ class Cell:
 
         Parameters:
             status (Status): The initial status of the cell. It must be a valid status from the Status enum.
-            spreading_prob (float, optional): The probability of the cell becoming a gossip spreader. Defaults to 0.
-
-        Raises:
-            ValueError: If the status is not an instance of the Status enum.
+            spreading_prob (float, optional): The probability of the cell becoming a gossip spreader.
+                                              Must be between 0 and 1 (inclusive). Defaults to 0.
         """
-        if not isinstance(status, Status):
-            raise ValueError(
-                f"status must be an instance of Status enum, got {type(status)}"
-            )
+        assert isinstance(
+            status, Status
+        ), f"status must be an instance of Status enum, got {type(status)}"
+        assert isinstance(
+            spreading_prob, (int, float)
+        ), f"spreading_prob must be a number, got {type(spreading_prob)}"
+        assert (
+            0 <= spreading_prob <= 1
+        ), f"spreading_prob must be between 0 and 1 (inclusive), got {spreading_prob}"
 
         self.status = status
         self.spreading_prob = spreading_prob
@@ -74,14 +77,10 @@ class Cell:
 
         Parameters:
             status (Status): The new status to set for the cell. It must be a valid status from the Status enum.
-
-        Raises:
-            ValueError: If the provided status is not an instance of the Status enum.
         """
-        if not isinstance(status, Status):
-            raise ValueError(
-                f"status must be an instance of Status enum, got {type(status)}"
-            )
+        assert isinstance(
+            status, Status
+        ), f"status must be an instance of Status enum, got {type(status)}"
 
         self.status = status
 
@@ -117,28 +116,33 @@ class Cell:
         Sets the spreading probability of the cell, ensuring it is between 0 and 1.
 
         Parameters:
-            spreading_prob (float): The new spreading probability to set for the cell.
-
-        Raises:
-            ValueError: If spreading_prob is not between 0 and 1 (inclusive).
+            spreading_prob (float): The new spreading probability to set for the cell. Must be between 0 and 1 (inclusive).
         """
-        if not (0 <= spreading_prob <= 1):
-            raise ValueError(
-                f"spreading_prob must be between 0 and 1, got {spreading_prob}"
-            )
+        assert isinstance(
+            spreading_prob, (int, float)
+        ), f"spreading_prob must be a number, got {type(spreading_prob)}"
+        assert (
+            0 <= spreading_prob <= 1
+        ), f"spreading_prob must be between 0 and 1 (inclusive), got {spreading_prob}"
 
         self.spreading_prob = spreading_prob
 
-    def __eq__(self, value):
+    def __eq__(self, other):
         """
         Check if two cells are equal based on their status and spreading probability.
+
+        Parameters:
+            other (Cell): Another Cell instance to compare with.
+
+        Returns:
+            bool: True if the two cells are equal, False otherwise.
         """
-        if isinstance(value, Cell):
-            return (
-                self.status == value.status
-                and self.spreading_prob == value.spreading_prob
-            )
-        return False
+        if not isinstance(other, Cell):
+            return NotImplemented
+
+        return (
+            self.status == other.status and self.spreading_prob == other.spreading_prob
+        )
 
 
 class Grid:
@@ -169,18 +173,23 @@ class Grid:
 
         Parameters:
             size (int): The size of the grid (number of rows and columns).
-            density (float): The fraction of cells to be initially filled as clueless (range between 0 and 1).
-            spread_threshold (float): The probability threshold for a clueless cell to become a gossip spreader.
-
-        Raises:
-            ValueError: If density or spread_threshold is not between 0 and 1 (inclusive).
+            density (float): The fraction of cells to be initially filled as clueless. Must be between 0 and 1 (inclusive).
+            spread_threshold (float): The probability threshold for a clueless cell to become a gossip spreader. Must be between 0 and 1 (inclusive).
         """
-        if not (0 <= density <= 1):
-            raise ValueError(f"density must be between 0 and 1, got {density}")
-        if not (0 <= spread_threshold <= 1):
-            raise ValueError(
-                f"spread_threshold must be between 0 and 1, got {spread_threshold}"
-            )
+        assert isinstance(size, int), f"size must be an integer, got {type(size)}"
+        assert size > 0, f"size must be greater than 0, got {size}"
+        assert isinstance(
+            density, (int, float)
+        ), f"density must be a number, got {type(density)}"
+        assert (
+            0 <= density <= 1
+        ), f"density must be between 0 and 1 (inclusive), got {density}"
+        assert isinstance(
+            spread_threshold, (int, float)
+        ), f"spread_threshold must be a number, got {type(spread_threshold)}"
+        assert (
+            0 <= spread_threshold <= 1
+        ), f"spread_threshold must be between 0 and 1 (inclusive), got {spread_threshold}"
 
         self.size = size
         self.lecture_hall = []
@@ -195,12 +204,11 @@ class Grid:
             - If 1, the initial spreader is placed in the central subgrid of the lecture hall
               (approximately a square of size self.size/2 x self.size/2).
             - If 0, the initial spreader is placed near the edges of the lecture hall, outside the central region.
-        Raises:
-            ValueError: If flag_center is not 0 or 1.
-
         """
-        if flag_center not in [0, 1]:
-            raise ValueError("flag_center must be 0 or 1")
+        assert flag_center in [
+            0,
+            1,
+        ], f"flag_center must be either 0 or 1, got {flag_center}"
 
         if flag_center == 1:
             # Set the spreader in the central 10x10 subgrid
@@ -237,13 +245,12 @@ class Grid:
             - If 1, the initial spreader is placed in the central subgrid of the lecture hall
               (approximately a square of size self.size/2 x self.size/2).
             - If 0, the initial spreader is placed near the edges of the lecture hall, outside the central region.
-        Raises:
-            ValueError: If flag_center is not 0 or 1.
-
         """
-        if flag_center not in [0, 1]:
-            raise ValueError("flag_center must be 0 or 1")
-        
+        assert flag_center in [
+            0,
+            1,
+        ], f"flag_center must be either 0 or 1, got {flag_center}"
+
         self.lecture_hall = [
             [Cell(Status.UNOCCUPIED) for _ in range(self.size)]
             for _ in range(self.size)
@@ -272,6 +279,11 @@ class Grid:
             i (int): The row index of the cell.
             j (int): The column index of the cell.
         """
+        assert isinstance(i, int), f"i must be an integer, got {type(i)}"
+        assert 0 <= i < self.size, f"i must be between 0 and {self.size - 1}, got {i}"
+        assert isinstance(j, int), f"j must be an integer, got {type(j)}"
+        assert 0 <= j < self.size, f"j must be between 0 and {self.size - 1}, got {j}"
+
         self.lecture_hall[i][j].set_status(Status.GOSSIP_SPREADER)
 
     def get_neighbours(self, i, j):
@@ -288,6 +300,11 @@ class Grid:
         Returns:
             list of Cell: The list of neighboring cells (top, bottom, left, right).
         """
+        assert isinstance(i, int), f"i must be an integer, got {type(i)}"
+        assert 0 <= i < self.size, f"i must be between 0 and {self.size - 1}, got {i}"
+        assert isinstance(j, int), f"j must be an integer, got {type(j)}"
+        assert 0 <= j < self.size, f"j must be between 0 and {self.size - 1}, got {j}"
+
         neighbours = []
 
         # Top neighbour
@@ -384,8 +401,10 @@ class Grid:
         Returns:
             (list, dict): A tuple containing a list of 2D grids, where each grid represents the state of the lecture hall
                   at a given time step, including the initial state and a dictionary containing the counts of each status over iterations.
-        TODO -- clean up return
         """
+        assert isinstance(steps, int), f"steps must be an integer, got {type(steps)}"
+        assert steps > 0, f"steps must be greater than 0, got {steps}"
+
         all_grids = [self.lecture_hall]
 
         same = 0
@@ -687,7 +706,7 @@ def show_lecture_hall_over_time(
 
 def calculate_cluster_size_distribution(grids):
     """
-    Calculates the size distribution of connected clusters of cells with the specified status 
+    Calculates the size distribution of connected clusters of cells with the specified status
     across multiple simulation grids (Grid objects).
 
     Parameters:
@@ -698,7 +717,7 @@ def calculate_cluster_size_distribution(grids):
         dict: A dictionary where keys are cluster sizes and values are the total number of clusters
               of that size across all grids.
     """
-    
+
     def dfs_size(grid, visited, i, j):
         """
         Performs a Depth-First Search (DFS) to explore a cluster of connected cells in the grid.
@@ -749,7 +768,10 @@ def calculate_cluster_size_distribution(grids):
         # Iterate through the grid to find clusters
         for i in range(size):
             for j in range(size):
-                if not visited[i][j] and grid.lecture_hall[i][j].get_status() == Status.GOSSIP_SPREADER:
+                if (
+                    not visited[i][j]
+                    and grid.lecture_hall[i][j].get_status() == Status.GOSSIP_SPREADER
+                ):
                     cluster_size = dfs_size(grid, visited, i, j)
                     if cluster_size > 0:
                         cluster_sizes.append(cluster_size)
@@ -776,20 +798,28 @@ def plot_log_log_distribution(cluster_distribution, density, spread_threshold, c
         spread_threshold (float): The spread threshold used in the simulation.
         color (str): The color for plotting the curve.
     """
-    #get the data for the log-log plot
+    # get the data for the log-log plot
     cluster_sizes = list(cluster_distribution.keys())
     frequencies = list(cluster_distribution.values())
 
-    #apply logarithmic transformation
+    # apply logarithmic transformation
     log_sizes = np.log10(cluster_sizes)
     log_frequencies = np.log10(frequencies)
 
-    #plot the log-log graph
-    plt.plot(log_sizes, log_frequencies, color=color, label=f'Density={density}, Spread ={spread_threshold}', marker='.', linestyle='none')
+    # plot the log-log graph
+    plt.plot(
+        log_sizes,
+        log_frequencies,
+        color=color,
+        label=f"Density={density}, Spread ={spread_threshold}",
+        marker=".",
+        linestyle="none",
+    )
 
 
-
-def run_multiple_simulations_same_initial_conditions(num_simulations, grid_size, density, spread_threshold, steps=100, flag_center=1):
+def run_multiple_simulations_same_initial_conditions(
+    num_simulations, grid_size, density, spread_threshold, steps=100, flag_center=1
+):
     """
     Runs multiple simulations with the same initial conditions (same grid size, density, and spreading threshold)
     and calculates the cluster size distribution for each simulation.
@@ -806,21 +836,21 @@ def run_multiple_simulations_same_initial_conditions(num_simulations, grid_size,
         list of dict: A list of cluster size distributions (one for each simulation).
     """
     cluster_distributions = []
-    
-    #run multiple simulations
+
+    # run multiple simulations
     for _ in range(num_simulations):
-        #create and initialize the grid
+        # create and initialize the grid
         grid = Grid(size=grid_size, density=density, spread_threshold=spread_threshold)
         grid.initialize_board(flag_center)
 
-        #run the simulation 
+        # run the simulation
         grid.run_simulation(steps=steps)
 
-        #calculate the cluster size distribution for the current grid
+        # calculate the cluster size distribution for the current grid
         cluster_distribution = calculate_cluster_size_distribution([grid])
         cluster_distributions.append(cluster_distribution)
-    
-    #return the list of cluster distributions from all simulations
+
+    # return the list of cluster distributions from all simulations
     return cluster_distributions
 
 
@@ -829,17 +859,17 @@ def aggregate_cluster_distributions(cluster_distributions):
     Aggregates multiple cluster size distributions into a single distribution.
 
     Parameters:
-        cluster_distributions (list of dict): A list of list of dictionaries where each dictionary 
-                                              represents a cluster size distribution. 
-                                              Keys are cluster sizes (int), and values are 
+        cluster_distributions (list of dict): A list of list of dictionaries where each dictionary
+                                              represents a cluster size distribution.
+                                              Keys are cluster sizes (int), and values are
                                               their corresponding frequencies (int).
 
     Returns:
-        dict: A single aggregated cluster size distribution. Keys are cluster sizes (int), 
+        dict: A single aggregated cluster size distribution. Keys are cluster sizes (int),
               and values are the total frequencies (int) across all input distributions.
     """
     aggregated_distribution = {}
-    #turn the list of list of dictionaries into a flat list of dictionaries
+    # turn the list of list of dictionaries into a flat list of dictionaries
     flat_distributions = [
         distribution
         for sublist in cluster_distributions
@@ -855,7 +885,9 @@ def aggregate_cluster_distributions(cluster_distributions):
     return aggregated_distribution
 
 
-def aggregate_and_plot_cluster_distributions(aggregated_distributions, grid_size, labels):
+def aggregate_and_plot_cluster_distributions(
+    aggregated_distributions, grid_size, labels
+):
     """
     Plots the log-log graph of multiple aggregated cluster size distributions.
 
@@ -868,32 +900,38 @@ def aggregate_and_plot_cluster_distributions(aggregated_distributions, grid_size
         labels (list of str): A list of labels corresponding to each aggregated cluster distribution,
                               describing the conditions under which the data was generated (e.g.,
                               "Density=0.3, Threshold=0.2").
-    
+
     Returns:
         None: Displays the log-log plot of the cluster size distributions.
     """
     plt.figure(figsize=(10, 8))
 
-    #plot each aggregated distribution with its label
+    # plot each aggregated distribution with its label
     for distribution, label in zip(aggregated_distributions, labels):
         cluster_sizes = list(distribution.keys())
         frequencies = list(distribution.values())
 
-        #log transformation
+        # log transformation
         log_sizes = np.log10(cluster_sizes)
         log_frequencies = np.log10(frequencies)
 
         plt.plot(log_sizes, log_frequencies, marker=".", linestyle="none", label=label)
 
-    #plot settings
-    plt.title(f"Log-Log Plot of Cluster Size Distributions (Grid={grid_size}x{grid_size})", fontsize=14)
+    # plot settings
+    plt.title(
+        f"Log-Log Plot of Cluster Size Distributions (Grid={grid_size}x{grid_size})",
+        fontsize=14,
+    )
     plt.xlabel("Log10(Cluster Size)", fontsize=12)
     plt.ylabel("Log10(Frequency)", fontsize=12)
     plt.grid(True)
     plt.legend()
     plt.show()
 
-def simulate_and_plot_gossip_model_all_combinations(grid_size, densities, spread_thresholds, num_simulations, flag_center=1):
+
+def simulate_and_plot_gossip_model_all_combinations(
+    grid_size, densities, spread_thresholds, num_simulations, flag_center=1
+):
     """
     Runs multiple simulations for all combinations of densities and spread thresholds,
     aggregates the results, and plots the log-log distributions.
@@ -913,21 +951,31 @@ def simulate_and_plot_gossip_model_all_combinations(grid_size, densities, spread
     # Iterate over all combinations of densities and spread thresholds
     for density in densities:
         for spread_threshold in spread_thresholds:
-            print(f"Running simulations for Density={density}, Spread Threshold={spread_threshold}...")
+            print(
+                f"Running simulations for Density={density}, Spread Threshold={spread_threshold}..."
+            )
 
             # Run multiple simulations for this parameter set
             cluster_distributions = []
-            cluster_distribution = run_multiple_simulations_same_initial_conditions(num_simulations, grid_size, density, spread_threshold, flag_center=flag_center)
+            cluster_distribution = run_multiple_simulations_same_initial_conditions(
+                num_simulations,
+                grid_size,
+                density,
+                spread_threshold,
+                flag_center=flag_center,
+            )
             cluster_distributions.append(cluster_distribution)
 
             # Aggregate the cluster size distributions
-            aggregated_distribution = aggregate_cluster_distributions(cluster_distributions)
+            aggregated_distribution = aggregate_cluster_distributions(
+                cluster_distributions
+            )
             all_aggregated_distributions.append(aggregated_distribution)
 
             # Create a label for this parameter combination
             labels.append(f"Density={density}, Threshold={spread_threshold}")
 
     # Plot all aggregated distributions on the same log-log graph
-    aggregate_and_plot_cluster_distributions(all_aggregated_distributions, grid_size, labels)
-
-
+    aggregate_and_plot_cluster_distributions(
+        all_aggregated_distributions, grid_size, labels
+    )
