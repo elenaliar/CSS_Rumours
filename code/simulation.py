@@ -20,7 +20,7 @@ def run_simulation(grid, steps=1000):
     assert isinstance(steps, int), f"steps must be an integer, got {type(steps)}"
     assert steps > 0, f"steps must be greater than 0, got {steps}"
 
-    all_grids = [grid]
+    all_grids = [copy.deepcopy(grid)]
 
     same = 0
     prev_grid = None
@@ -42,7 +42,7 @@ def run_simulation(grid, steps=1000):
         grid.update_grid()
 
         prev_grid = current_grid
-        all_grids.append(grid)
+        all_grids.append(copy.deepcopy(grid))
 
     return all_grids
 
