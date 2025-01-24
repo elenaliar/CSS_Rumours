@@ -5,11 +5,7 @@ from enum import Enum
 
 import matplotlib.pyplot as plt
 import numpy as np
-from IPython.display import HTML
-from matplotlib import animation
 from matplotlib.animation import PillowWriter
-from matplotlib.colors import ListedColormap
-from matplotlib.patches import Patch, Rectangle
 
 
 class Status(Enum):
@@ -161,7 +157,6 @@ class Grid:
         get_neighbours(i, j): Returns the list of neighboring cells (top, bottom, left, right) of the cell at (i, j).
         update_grid(): Updates the grid by iterating through each cell, changing statuses based on neighboring gossip spreaders and the cell's spreading probability.
         show_grid(): Displays the current state of the grid using `matplotlib`.
-        run_simulation(steps): Runs the simulation for a given number of steps.
         save_grid(iteration, save_path): Saves the current grid into a given filepath including the iteration number in the title.
         generate_gif(steps, gif_name): Runs the simulation for given number of steps and saves it as a gif.
         check_percolation(): Checks whether percolation happens in both directions and returns either True or False.
@@ -311,7 +306,7 @@ class Grid:
         # Top neighbour
         if i > 0:
             neighbours.append(self.lecture_hall[i - 1][j])
-            #upper diagonal neighbors
+            # upper diagonal neighbors
             if flag_neighbors == 1:
                 if j > 0:
                     neighbours.append(self.lecture_hall[i - 1][j - 1])
@@ -321,7 +316,7 @@ class Grid:
         # Bottom neighbour
         if i < self.size - 1:
             neighbours.append(self.lecture_hall[i + 1][j])
-            #bottom diagonal neighbors
+            # bottom diagonal neighbors
             if flag_neighbors == 1:
                 if j > 0:
                     neighbours.append(self.lecture_hall[i + 1][j - 1])
@@ -402,78 +397,6 @@ class Grid:
         if iteration is not None:
             plt.title(f"Iteration {iteration}")
         plt.show()
-
-    def run_simulation(self, steps=1000):
-        """
-        Runs the simulation for a specified number of steps, updating the grid at each iteration.
-        Stops iteration if no cell status changes for 3 consecutive steps.
-
-        Parameters:
-            steps (int): The number of steps to simulate.
-
-        Returns:
-            (list, dict): A tuple containing a list of 2D grids, where each grid represents the state of the lecture hall
-                  at a given time step, including the initial state and a dictionary containing the counts of each status over iterations.
-        """
-        assert isinstance(steps, int), f"steps must be an integer, got {type(steps)}"
-        assert steps > 0, f"steps must be greater than 0, got {steps}"
-
-        all_grids = [self.lecture_hall]
-
-        same = 0
-        prev_grid = None
-
-        status_counts = {
-            "UNOCCUPIED": [],
-            "CLUELESS": [],
-            "SECRET_KEEPER": [],
-            "GOSSIP_SPREADER": [],
-        }
-
-        for step in range(steps):
-            new_counts = {
-                "UNOCCUPIED": 0,
-                "CLUELESS": 0,
-                "SECRET_KEEPER": 0,
-                "GOSSIP_SPREADER": 0,
-            }
-            current_grid = copy.deepcopy(self.lecture_hall)
-
-            # check if grid is the same as the previous grid
-            if prev_grid is not None and prev_grid == current_grid:
-                same += 1
-            else:
-                same = 0
-
-            # stop simulation if no cell status changed for 3 consecutive steps
-            if same == 3:
-                break
-
-            # count statuses
-            for i in range(self.size):
-                for j in range(self.size):
-                    cell_status = self.lecture_hall[i][j].get_status()
-                    if cell_status == Status.UNOCCUPIED:
-                        new_counts["UNOCCUPIED"] += 1
-                    elif cell_status == Status.CLUELESS:
-                        new_counts["CLUELESS"] += 1
-                    elif cell_status == Status.SECRET_KEEPER:
-                        new_counts["SECRET_KEEPER"] += 1
-                    elif cell_status == Status.GOSSIP_SPREADER:
-                        new_counts["GOSSIP_SPREADER"] += 1
-
-            status_counts["UNOCCUPIED"].append(new_counts["UNOCCUPIED"])
-            status_counts["CLUELESS"].append(new_counts["CLUELESS"])
-            status_counts["SECRET_KEEPER"].append(new_counts["SECRET_KEEPER"])
-            status_counts["GOSSIP_SPREADER"].append(new_counts["GOSSIP_SPREADER"])
-
-            # update the grid
-            self.update_grid()
-
-            prev_grid = current_grid
-            all_grids.append(self.lecture_hall)
-
-        return all_grids, status_counts
 
     def save_grid(self, iteration=None, save_path=None):
         """
@@ -602,9 +525,9 @@ class Grid:
             # start DFS from any occupied cell in the top row (row 0)
             for j in range(self.size):
                 if (
-                    (self.lecture_hall[0][j].get_status() == Status.GOSSIP_SPREADER or self.lecture_hall[0][j].get_status() == Status.SECRET_KEEPER)
-                    and not visited[0][j]
-                ):
+                    self.lecture_hall[0][j].get_status() == Status.GOSSIP_SPREADER
+                    or self.lecture_hall[0][j].get_status() == Status.SECRET_KEEPER
+                ) and not visited[0][j]:
                     if self.dfs(
                         visited, 0, j, target_row=self.size - 1
                     ):  # Target row is the last row
@@ -616,9 +539,9 @@ class Grid:
             # start DFS from any occupied cell in the leftmost column (column 0)
             for i in range(self.size):
                 if (
-                    (self.lecture_hall[i][0].get_status() == Status.GOSSIP_SPREADER or self.lecture_hall[i][0].get_status() == Status.SECRET_KEEPER)
-                    and not visited[i][0]
-                ):
+                    self.lecture_hall[i][0].get_status() == Status.GOSSIP_SPREADER
+                    or self.lecture_hall[i][0].get_status() == Status.SECRET_KEEPER
+                ) and not visited[i][0]:
                     if self.dfs(
                         visited, i, 0, target_col=self.size - 1
                     ):  # target column is the last column
@@ -637,359 +560,3 @@ class Grid:
         return self.check_percolation_direction(
             "vertical"
         ) and self.check_percolation_direction("horizontal")
-
-
-def show_lecture_hall_over_time(
-    cell_grids, save_animation=False, animation_name="gossip_spread_simulation.mp4"
-):
-    """
-    Visualise the spread of a rumour over time using an animated grid and outlining the central region
-
-    Parameters:
-        cell_grids (list of list of list of Cell): List of lecture hall grids of cells, one grid for each time step.
-        save_animation (bool, optional): Whether to save the animation as an MP4 file. Default is False.
-        animation_name (str, optional): The name of the file to save the animation if `save_animation` is True.
-
-    Returns:
-            HTML: An HTML object containing the animation for rendering in Jupyter Notebook.
-    """
-    # Set up the figure and color map
-    init_grid = [[cell.get_status().value for cell in row] for row in cell_grids[0]]
-
-    fig = plt.figure()
-    colors = ["lightgray", "white", "gold", "goldenrod"]
-    cmap = ListedColormap(colors)
-
-    im = plt.imshow(init_grid, cmap=cmap, interpolation="none", animated=True)
-
-    # Add a square specifying the central 10x10 area
-    ax = plt.gca()
-    left_corner_coordinate = (len(init_grid[0]) // 4) - 0.5
-    square = Rectangle(
-        (left_corner_coordinate, left_corner_coordinate),
-        11,
-        11,
-        edgecolor="dimgray",
-        facecolor="none",
-        linewidth=2,
-    )
-    ax.add_patch(square)
-
-    # Add legend to the plot
-    legend_patches = [
-        Patch(
-            facecolor=color, edgecolor="black", label=f"State {i}"
-        )  # TODO: use the names of states instead of numbers
-        for i, color in enumerate(colors)
-    ]
-
-    plt.legend(
-        handles=legend_patches,
-        title="States",
-        loc="upper right",
-        bbox_to_anchor=(1.2, 1),
-    )
-
-    # Get the state number for each cell
-    grids = [
-        [[cell.get_status().value for cell in row] for row in cell_grid]
-        for cell_grid in cell_grids
-    ]
-
-    # animation function. This is called sequentially
-    def animate(i):
-        im.set_array(grids[i])
-        return (im,)
-
-    # call the animator.  blit=True means only re-draw the parts that have changed.
-    anim = animation.FuncAnimation(
-        fig, animate, frames=len(grids), interval=200, blit=True
-    )
-
-    # save the animation as an mp4.  This requires ffmpeg or mencoder to be
-    # installed.  The extra_args ensure that the x264 codec is used, so that
-    # the video can be embedded in html5.  You may need to adjust this for
-    # your system: for more information, see
-    # http://matplotlib.sourceforge.net/api/animation_api.html
-    if save_animation:
-        anim.save(animation_name, fps=30, extra_args=["-vcodec", "libx264"])
-
-    return HTML(anim.to_html5_video())
-
-
-def calculate_cluster_size_distribution(grids):
-    """
-    Calculates the size distribution of connected clusters of cells with the specified status
-    across multiple simulation grids (Grid objects).
-
-    Parameters:
-        grids (list of Grid): A list of Grid objects from different simulations.
-        target_status (Status): The status of the cells to include in the cluster size calculation.
-
-    Returns:
-        dict: A dictionary where keys are cluster sizes and values are the total number of clusters
-              of that size across all grids.
-    """
-
-    def dfs_size(grid, visited, i, j):
-        """
-        Performs a Depth-First Search (DFS) to explore a cluster of connected cells in the grid.
-
-        This function recursively visits all connected cells, checking all four neighbors (up, down, left, and right)
-        for connectivity. It will stop when all possible cells in the cluster have been visited.
-
-        Parameters:
-            i (int): The row index of the current cell to start the DFS from.
-            j (int): The column index of the current cell to start the DFS from.
-            target_row (int, optional): The row index we are trying to reach (for vertical percolation).
-            target_col (int, optional): The column index we are trying to reach (for horizontal percolation).
-
-        Returns:
-            int: The size of the cluster of connected cells.
-        """
-        # Check if the current cell is within bounds, is not visited, and is occupied
-        if (
-            i < 0
-            or i >= grid.size
-            or j < 0
-            or j >= grid.size
-            or visited[i][j]
-            or grid.lecture_hall[i][j].get_status() != Status.GOSSIP_SPREADER
-        ):
-            return 0  # Return 0 if the current cell is invalid or already visited
-
-        # Mark this cell as visited
-        visited[i][j] = True
-
-        # Initialize the size of the cluster with this cell
-        cluster_size = 1
-
-        # Explore all four possible neighbors: down, up, right, left
-        cluster_size += dfs_size(grid, visited, i + 1, j)  # Down
-        cluster_size += dfs_size(grid, visited, i - 1, j)  # Up
-        cluster_size += dfs_size(grid, visited, i, j + 1)  # Right
-        cluster_size += dfs_size(grid, visited, i, j - 1)  # Left
-
-        return cluster_size
-
-    cluster_sizes = []
-
-    for grid in grids:
-        size = grid.size
-        visited = [[False for _ in range(size)] for _ in range(size)]
-
-        # Iterate through the grid to find clusters
-        for i in range(size):
-            for j in range(size):
-                if not visited[i][j] and (grid.lecture_hall[i][j].get_status() == Status.GOSSIP_SPREADER or grid.lecture_hall[i][j].get_status() == Status.SECRET_KEEPER):
-                    cluster_size = dfs_size(grid, visited, i, j)
-                    if cluster_size > 0:
-                        cluster_sizes.append(cluster_size)
-
-    # Calculate the size distribution
-    cluster_distribution = {}
-    for size in cluster_sizes:
-        if size in cluster_distribution:
-            cluster_distribution[size] += 1
-        else:
-            cluster_distribution[size] = 1
-
-    return cluster_distribution
-
-
-def plot_log_log_distribution(cluster_distribution, density, spread_threshold, color):
-    """
-    Plots the log-log graph of cluster size distribution.
-
-    Parameters:
-        cluster_distribution (dict): A dictionary where keys are cluster sizes and values
-                                     are the frequencies of those sizes.
-        density (float): The density used in the simulation.
-        spread_threshold (float): The spread threshold used in the simulation.
-        color (str): The color for plotting the curve.
-    """
-    # get the data for the log-log plot
-    cluster_sizes = list(cluster_distribution.keys())
-    frequencies = list(cluster_distribution.values())
-
-    # apply logarithmic transformation
-    log_sizes = np.log10(cluster_sizes)
-    log_frequencies = np.log10(frequencies)
-
-    # plot the log-log graph
-    plt.plot(
-        log_sizes,
-        log_frequencies,
-        color=color,
-        label=f"Density={density}, Spread ={spread_threshold}",
-        marker=".",
-        linestyle="none",
-    )
-
-
-def run_multiple_simulations_same_initial_conditions(
-    num_simulations, grid_size, density, spread_threshold, steps=100, flag_center=1
-):
-    """
-    Runs multiple simulations with the same initial conditions (same grid size, density, and spreading threshold)
-    and calculates the cluster size distribution for each simulation.
-
-    Parameters:
-        num_simulations (int): The number of simulations to run.
-        grid_size (int): The size of the grid (e.g., number of rows and columns).
-        density (float): The fraction of cells initially occupied.
-        spread_threshold (float): The threshold probability for a cell to become a gossip spreader.
-        steps(int): The number of steps for each simulation.
-        flag_center (int): The flag to determine the initial spreader placement.
-
-    Returns:
-        list of dict: A list of cluster size distributions (one for each simulation).
-    """
-    cluster_distributions = []
-    count_percolation = 0
-    
-    #run multiple simulations
-    for _ in range(num_simulations):
-        # create and initialize the grid
-        grid = Grid(size=grid_size, density=density, spread_threshold=spread_threshold)
-        grid.initialize_board(flag_center)
-
-        # run the simulation
-        grid.run_simulation(steps=steps)
-        if grid.check_percolation():
-            count_percolation += 1
-        #calculate the cluster size distribution for the current grid
-        cluster_distribution = calculate_cluster_size_distribution([grid])
-        cluster_distributions.append(cluster_distribution)
-
-
-    print(f"Percolation occured in {count_percolation} out of {num_simulations} simulations for density={density}, spread_threshold={spread_threshold}")
-    #return the list of cluster distributions from all simulations
-    return cluster_distributions
-
-
-def aggregate_cluster_distributions(cluster_distributions):
-    """
-    Aggregates multiple cluster size distributions into a single distribution.
-
-    Parameters:
-        cluster_distributions (list of dict): A list of list of dictionaries where each dictionary
-                                              represents a cluster size distribution.
-                                              Keys are cluster sizes (int), and values are
-                                              their corresponding frequencies (int).
-
-    Returns:
-        dict: A single aggregated cluster size distribution. Keys are cluster sizes (int),
-              and values are the total frequencies (int) across all input distributions.
-    """
-    aggregated_distribution = {}
-    # turn the list of list of dictionaries into a flat list of dictionaries
-    flat_distributions = [
-        distribution
-        for sublist in cluster_distributions
-        if isinstance(sublist, list)
-        for distribution in sublist
-    ]
-    for distribution in flat_distributions:
-        for size, count in distribution.items():
-            if size in aggregated_distribution:
-                aggregated_distribution[size] += count
-            else:
-                aggregated_distribution[size] = count
-    return aggregated_distribution
-
-
-def aggregate_and_plot_cluster_distributions(
-    aggregated_distributions, grid_size, labels
-):
-    """
-    Plots the log-log graph of multiple aggregated cluster size distributions.
-
-    Parameters:
-        aggregated_distributions (list of dict): A list of aggregated cluster size distributions.
-                                                 Each dictionary represents a cluster size distribution
-                                                 with keys as cluster sizes (int) and values as their
-                                                 corresponding frequencies (int).
-        grid_size (int): The size of the grid used in the simulations.
-        labels (list of str): A list of labels corresponding to each aggregated cluster distribution,
-                              describing the conditions under which the data was generated (e.g.,
-                              "Density=0.3, Threshold=0.2").
-
-    Returns:
-        None: Displays the log-log plot of the cluster size distributions.
-    """
-    plt.figure(figsize=(10, 8))
-
-    # plot each aggregated distribution with its label
-    for distribution, label in zip(aggregated_distributions, labels):
-        cluster_sizes = list(distribution.keys())
-        frequencies = list(distribution.values())
-
-        # log transformation
-        log_sizes = np.log10(cluster_sizes)
-        log_frequencies = np.log10(frequencies)
-
-        plt.plot(log_sizes, log_frequencies, marker=".", linestyle="none", label=label)
-
-    # plot settings
-    plt.title(
-        f"Log-Log Plot of Cluster Size Distributions (Grid={grid_size}x{grid_size})",
-        fontsize=14,
-    )
-    plt.xlabel("Log10(Cluster Size)", fontsize=12)
-    plt.ylabel("Log10(Frequency)", fontsize=12)
-    plt.grid(True)
-    plt.legend()
-    plt.show()
-
-
-def simulate_and_plot_gossip_model_all_combinations(
-    grid_size, densities, spread_thresholds, num_simulations, flag_center=1
-):
-    """
-    Runs multiple simulations for all combinations of densities and spread thresholds,
-    aggregates the results, and plots the log-log distributions.
-
-    Parameters:
-        simulation_function (function): A function that runs the gossip model simulation and returns a cluster size distribution.
-        grid_size (int): The size of the grid for the simulations.
-        densities (list): A list of densities to simulate.
-        spread_thresholds (list): A list of spread thresholds to simulate.
-        num_simulations (int): The number of simulations to run for each set of initial conditions.
-        flag_center (int): The flag to determine the initial spreader placement.
-    """
-    # Store aggregated cluster distributions and labels
-    all_aggregated_distributions = []
-    labels = []
-
-    # Iterate over all combinations of densities and spread thresholds
-    for density in densities:
-        for spread_threshold in spread_thresholds:
-            print(
-                f"Running simulations for Density={density}, Spread Threshold={spread_threshold}..."
-            )
-
-            # Run multiple simulations for this parameter set
-            cluster_distributions = []
-            cluster_distribution = run_multiple_simulations_same_initial_conditions(
-                num_simulations,
-                grid_size,
-                density,
-                spread_threshold,
-                flag_center=flag_center,
-            )
-            cluster_distributions.append(cluster_distribution)
-
-            # Aggregate the cluster size distributions
-            aggregated_distribution = aggregate_cluster_distributions(
-                cluster_distributions
-            )
-            all_aggregated_distributions.append(aggregated_distribution)
-
-            # Create a label for this parameter combination
-            labels.append(f"Density={density}, Threshold={spread_threshold}")
-
-    # Plot all aggregated distributions on the same log-log graph
-    aggregate_and_plot_cluster_distributions(
-        all_aggregated_distributions, grid_size, labels
-    )
