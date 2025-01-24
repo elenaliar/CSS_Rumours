@@ -286,7 +286,7 @@ class Grid:
 
         self.lecture_hall[i][j].set_status(Status.GOSSIP_SPREADER)
 
-    def get_neighbours(self, i, j):
+    def get_neighbours(self, i, j, flag_neighbors=1):
         """
         Returns the list of neighbors for the cell at position (i, j).
 
@@ -296,6 +296,7 @@ class Grid:
         Parameters:
             i (int): The row index of the cell.
             j (int): The column index of the cell.
+            flag_neighbors (int): The flag to determine the type of neighbors to include. If 1, implement Moore neighborhood, if 0, implement Von Neumann neighborhood.
 
         Returns:
             list of Cell: The list of neighboring cells (top, bottom, left, right).
@@ -310,10 +311,22 @@ class Grid:
         # Top neighbour
         if i > 0:
             neighbours.append(self.lecture_hall[i - 1][j])
+            #upper diagonal neighbors
+            if flag_neighbors == 1:
+                if j > 0:
+                    neighbours.append(self.lecture_hall[i - 1][j - 1])
+                if j < self.size - 1:
+                    neighbours.append(self.lecture_hall[i - 1][j + 1])
 
         # Bottom neighbour
         if i < self.size - 1:
             neighbours.append(self.lecture_hall[i + 1][j])
+            #bottom diagonal neighbors
+            if flag_neighbors == 1:
+                if j > 0:
+                    neighbours.append(self.lecture_hall[i + 1][j - 1])
+                if j < self.size - 1:
+                    neighbours.append(self.lecture_hall[i + 1][j + 1])
 
         # Left neighbour
         if j > 0:
@@ -589,7 +602,7 @@ class Grid:
             # start DFS from any occupied cell in the top row (row 0)
             for j in range(self.size):
                 if (
-                    self.lecture_hall[0][j].get_status() == Status.GOSSIP_SPREADER
+                    (self.lecture_hall[0][j].get_status() == Status.GOSSIP_SPREADER or self.lecture_hall[0][j].get_status() == Status.SECRET_KEEPER)
                     and not visited[0][j]
                 ):
                     if self.dfs(
@@ -603,7 +616,7 @@ class Grid:
             # start DFS from any occupied cell in the leftmost column (column 0)
             for i in range(self.size):
                 if (
-                    self.lecture_hall[i][0].get_status() == Status.GOSSIP_SPREADER
+                    (self.lecture_hall[i][0].get_status() == Status.GOSSIP_SPREADER or self.lecture_hall[i][0].get_status() == Status.SECRET_KEEPER)
                     and not visited[i][0]
                 ):
                     if self.dfs(
@@ -768,10 +781,7 @@ def calculate_cluster_size_distribution(grids):
         # Iterate through the grid to find clusters
         for i in range(size):
             for j in range(size):
-                if (
-                    not visited[i][j]
-                    and grid.lecture_hall[i][j].get_status() == Status.GOSSIP_SPREADER
-                ):
+                if not visited[i][j] and (grid.lecture_hall[i][j].get_status() == Status.GOSSIP_SPREADER or grid.lecture_hall[i][j].get_status() == Status.SECRET_KEEPER):
                     cluster_size = dfs_size(grid, visited, i, j)
                     if cluster_size > 0:
                         cluster_sizes.append(cluster_size)
@@ -836,8 +846,9 @@ def run_multiple_simulations_same_initial_conditions(
         list of dict: A list of cluster size distributions (one for each simulation).
     """
     cluster_distributions = []
-
-    # run multiple simulations
+    count_percolation = 0
+    
+    #run multiple simulations
     for _ in range(num_simulations):
         # create and initialize the grid
         grid = Grid(size=grid_size, density=density, spread_threshold=spread_threshold)
@@ -845,12 +856,15 @@ def run_multiple_simulations_same_initial_conditions(
 
         # run the simulation
         grid.run_simulation(steps=steps)
-
-        # calculate the cluster size distribution for the current grid
+        if grid.check_percolation():
+            count_percolation += 1
+        #calculate the cluster size distribution for the current grid
         cluster_distribution = calculate_cluster_size_distribution([grid])
         cluster_distributions.append(cluster_distribution)
 
-    # return the list of cluster distributions from all simulations
+
+    print(f"Percolation occured in {count_percolation} out of {num_simulations} simulations for density={density}, spread_threshold={spread_threshold}")
+    #return the list of cluster distributions from all simulations
     return cluster_distributions
 
 
