@@ -225,13 +225,25 @@ class Grid:
             Status.GOSSIP_SPREADER
         )
 
-    def initialize_board(self):
+    def initialize_board(self, flag_center=1):
         """
         Initializes the grid as fully unoccupied, and randomly selects some cells to be filled as clueless.
 
         The number of clueless cells is determined by the `density` attribute, which indicates the fraction of cells to be filled.
         The spreading probability for each clueless cell is also randomly assigned between 0 and 1.
+
+        Parameters:
+            flag_center (int):
+            - If 1, the initial spreader is placed in the central subgrid of the lecture hall
+              (approximately a square of size self.size/2 x self.size/2).
+            - If 0, the initial spreader is placed near the edges of the lecture hall, outside the central region.
+        Raises:
+            ValueError: If flag_center is not 0 or 1.
+
         """
+        if flag_center not in [0, 1]:
+            raise ValueError("flag_center must be 0 or 1")
+        
         self.lecture_hall = [
             [Cell(Status.UNOCCUPIED) for _ in range(self.size)]
             for _ in range(self.size)
@@ -250,7 +262,7 @@ class Grid:
             self.lecture_hall[i][j].set_spreading_prob(np.random.uniform(0, 1))
 
         # set initial spot, flag=1 for center, 0 for outside
-        self.set_initial_spreader(1)
+        self.set_initial_spreader(flag_center)
 
     def set_spreader(self, i, j):
         """
@@ -777,7 +789,7 @@ def plot_log_log_distribution(cluster_distribution, density, spread_threshold, c
 
 
 
-def run_multiple_simulations_same_initial_conditions(num_simulations, grid_size, density, spread_threshold, steps=100):
+def run_multiple_simulations_same_initial_conditions(num_simulations, grid_size, density, spread_threshold, steps=100, flag_center=1):
     """
     Runs multiple simulations with the same initial conditions (same grid size, density, and spreading threshold)
     and calculates the cluster size distribution for each simulation.
@@ -788,6 +800,7 @@ def run_multiple_simulations_same_initial_conditions(num_simulations, grid_size,
         density (float): The fraction of cells initially occupied.
         spread_threshold (float): The threshold probability for a cell to become a gossip spreader.
         steps(int): The number of steps for each simulation.
+        flag_center (int): The flag to determine the initial spreader placement.
 
     Returns:
         list of dict: A list of cluster size distributions (one for each simulation).
@@ -798,7 +811,7 @@ def run_multiple_simulations_same_initial_conditions(num_simulations, grid_size,
     for _ in range(num_simulations):
         #create and initialize the grid
         grid = Grid(size=grid_size, density=density, spread_threshold=spread_threshold)
-        grid.initialize_board()
+        grid.initialize_board(flag_center)
 
         #run the simulation 
         grid.run_simulation(steps=steps)
@@ -880,7 +893,7 @@ def aggregate_and_plot_cluster_distributions(aggregated_distributions, grid_size
     plt.legend()
     plt.show()
 
-def simulate_and_plot_gossip_model_all_combinations(grid_size, densities, spread_thresholds, num_simulations):
+def simulate_and_plot_gossip_model_all_combinations(grid_size, densities, spread_thresholds, num_simulations, flag_center=1):
     """
     Runs multiple simulations for all combinations of densities and spread thresholds,
     aggregates the results, and plots the log-log distributions.
@@ -891,6 +904,7 @@ def simulate_and_plot_gossip_model_all_combinations(grid_size, densities, spread
         densities (list): A list of densities to simulate.
         spread_thresholds (list): A list of spread thresholds to simulate.
         num_simulations (int): The number of simulations to run for each set of initial conditions.
+        flag_center (int): The flag to determine the initial spreader placement.
     """
     # Store aggregated cluster distributions and labels
     all_aggregated_distributions = []
@@ -903,7 +917,7 @@ def simulate_and_plot_gossip_model_all_combinations(grid_size, densities, spread
 
             # Run multiple simulations for this parameter set
             cluster_distributions = []
-            cluster_distribution = run_multiple_simulations_same_initial_conditions(num_simulations, grid_size, density, spread_threshold)
+            cluster_distribution = run_multiple_simulations_same_initial_conditions(num_simulations, grid_size, density, spread_threshold, flag_center=flag_center)
             cluster_distributions.append(cluster_distribution)
 
             # Aggregate the cluster size distributions
