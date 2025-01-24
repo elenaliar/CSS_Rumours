@@ -48,6 +48,15 @@ def run_simulation(grid, steps=1000):
 
 
 def count_statuses(grids):
+    """
+    Iterates through all the grids and for each grid calculates the number of cells of each status.
+
+    Parameters:
+        grids (list of Grid): List of grids.
+
+    Returns:
+        (dict of list): A dictionary containing lists with status counts, one list for each status and one entry for each grid.
+    """
     status_counts = {
         "UNOCCUPIED": [],
         "CLUELESS": [],
