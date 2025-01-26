@@ -241,11 +241,23 @@ def plot_percolation_results(
     )
 
 
-def plot_percolation_vs_density(size, spread_threshold, steps, no_simulations):
+def plot_percolation_vs_density(
+    grid_size, spread_threshold, steps=1000, num_simulations=100
+):
+    """
+    Runs multiple simulations for 20 different densities and a given value spread thresholds,
+    and calculates the probability of a percolation occuring.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        spread_threshold (float): A spread threshold value to use for the simulations.
+        steps (int, optional): The max number of time steps for each simulation. Defaults to 100.
+        num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+    """
     densities = np.linspace(0, 1, 20)
     print("Starting simulation for different densities...")
     percolations = simulate_and_collect_percolations(
-        size, densities, spread_threshold, steps, no_simulations
+        grid_size, densities, spread_threshold, steps, num_simulations
     )
     print("Simulations completed.")
 
@@ -259,7 +271,7 @@ def plot_percolation_vs_density(size, spread_threshold, steps, no_simulations):
     plt.show()
 
 
-def plot_percolation_vs_spread_threshold(size, density, steps, no_simulations):
+def plot_percolation_vs_spread_threshold(size, density, steps, num_simulations):
     thresholds = np.linspace(0, 1, 20)
     percolations = []
 
@@ -267,7 +279,7 @@ def plot_percolation_vs_spread_threshold(size, density, steps, no_simulations):
 
     for threshold in tqdm(thresholds, desc="Simulating thresholds"):
         percolations.append(
-            simulate_density(size, density, threshold, steps, no_simulations)
+            simulate_density(size, density, threshold, steps, num_simulations)
         )
 
     print("Simulations completed.")
@@ -289,7 +301,7 @@ def plot_percolation_vs_spread_threshold(size, density, steps, no_simulations):
     plt.show()
 
 
-def plot_percolation_vs_density_vs_spread_threshold(size, steps, no_simulations):
+def plot_percolation_vs_density_vs_spread_threshold(size, steps, num_simulations):
     spread_thresholds = np.linspace(0, 1, 10)
     densities = np.linspace(0, 1, 20)
 
@@ -297,7 +309,7 @@ def plot_percolation_vs_density_vs_spread_threshold(size, steps, no_simulations)
     for spread_threshold in spread_thresholds:
         print(f"Simulating for spread_threshold = {spread_threshold:.2f}...")
         percolations = simulate_and_collect_percolations(
-            size, densities, spread_threshold, steps, no_simulations
+            size, densities, spread_threshold, steps, num_simulations
         )
         plot_percolation_results(
             densities, percolations, spread_threshold=spread_threshold
@@ -311,7 +323,7 @@ def plot_percolation_vs_density_vs_spread_threshold(size, steps, no_simulations)
     plt.show()
 
 
-def plot_3d_percolation_vs_density_and_threshold(size, steps, no_simulations):
+def plot_3d_percolation_vs_density_and_threshold(size, steps, num_simulations):
     densities = np.linspace(0, 1, 20)
     thresholds = np.linspace(0, 1, 20)
 
@@ -320,7 +332,7 @@ def plot_3d_percolation_vs_density_and_threshold(size, steps, no_simulations):
     for threshold in tqdm(thresholds, desc="Simulating thresholds"):
         # Use the simulate_and_collect_percolations function for densities
         percolations = simulate_and_collect_percolations(
-            size, densities, threshold, steps, no_simulations
+            size, densities, threshold, steps, num_simulations
         )
         percolation_data.append(percolations)
 
@@ -343,14 +355,14 @@ def plot_3d_percolation_vs_density_and_threshold(size, steps, no_simulations):
     plt.show()
 
 
-def plot_phase_diagram_3D(size, steps, no_simulations):
+def plot_phase_diagram_3D(size, steps, num_simulations):
     """
     Plots the count of the GOSSIP_SPREADERS against density and spreading threshold as a 3D plot.
 
     Parameters:
         size (int): Size of the grid.
         steps (int): Number of steps in the simulation.
-        no_simulations (int): Number of simulations per parameter combination.
+        num_simulations (int): Number of simulations per parameter combination.
     """
     # range of densities and spreading thresholds
     densities = np.linspace(0, 1, 10)
@@ -361,7 +373,7 @@ def plot_phase_diagram_3D(size, steps, no_simulations):
     for i, spread_threshold in enumerate(spread_thresholds):
         for j, density in enumerate(densities):
             results = run_multiple_simulations_for_phase_diagram(
-                size, density, spread_threshold, steps, no_simulations
+                size, density, spread_threshold, steps, num_simulations
             )
 
             # average number of GOSSIP_SPREADERS across simulations
@@ -385,34 +397,35 @@ def plot_phase_diagram_3D(size, steps, no_simulations):
     plt.show()
 
 
-def plot_time_status(size, density, spread_threshold, steps, no_simulations):
+def plot_time_status(size, density, spread_threshold, steps, num_simulations):
     """
     Plots the counts of each status over time (iterations)..
 
     Parameters:
         size (int): The size of the grid.
         steps (int): The number of time steps (iterations) for each simulation.
-        no_simulations (int): The number of simulations to run.
+        num_simulations (int): The number of simulations to run.
     """
 
     results_gossip, results_secret, results_clueless, results_unoccupied = (
         run_multiple_simulations_for_timeplot_status(
-            size, density, spread_threshold, steps, no_simulations
+            size, density, spread_threshold, steps, num_simulations
         )
     )
 
     # average results over simulations
     average_gossip = [
-        sum(x) / no_simulations for x in zip(*results_gossip["simulation_outcomes"])
+        sum(x) / num_simulations for x in zip(*results_gossip["simulation_outcomes"])
     ]
     average_secret = [
-        sum(x) / no_simulations for x in zip(*results_secret["simulation_outcomes"])
+        sum(x) / num_simulations for x in zip(*results_secret["simulation_outcomes"])
     ]
     average_clueless = [
-        sum(x) / no_simulations for x in zip(*results_clueless["simulation_outcomes"])
+        sum(x) / num_simulations for x in zip(*results_clueless["simulation_outcomes"])
     ]
     average_unoccupied = [
-        sum(x) / no_simulations for x in zip(*results_unoccupied["simulation_outcomes"])
+        sum(x) / num_simulations
+        for x in zip(*results_unoccupied["simulation_outcomes"])
     ]
 
     iterations = range(len(average_unoccupied))

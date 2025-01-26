@@ -177,7 +177,7 @@ def calculate_cluster_size_distribution(grids):
 
 
 def run_multiple_simulations_for_percolation(
-    size, density, spread_threshold, steps, no_simulations
+    size, density, spread_threshold, steps, num_simulations
 ):
     """
     Runs multiple simulations for a given density and spread threshold.
@@ -190,7 +190,7 @@ def run_multiple_simulations_for_percolation(
         "simulation_outcomes": [],
     }
 
-    for _ in range(no_simulations):
+    for _ in range(num_simulations):
         g = Grid(size, density, spread_threshold)
         g.initialize_board()
         run_simulation(g, steps)
@@ -272,17 +272,17 @@ def aggregate_cluster_distributions(cluster_distributions):
     return aggregated_distribution
 
 
-def simulate_density(size, density, spread_threshold, steps, no_simulations):
+def simulate_density(size, density, spread_threshold, steps, num_simulations):
     """
     Simulates a single density and spread threshold and returns the fraction of simulations with percolation.
     """
     results = run_multiple_simulations_for_percolation(
-        size, density, spread_threshold, steps, no_simulations
+        size, density, spread_threshold, steps, num_simulations
     )
-    return sum(results["simulation_outcomes"]) / no_simulations
+    return sum(results["simulation_outcomes"]) / num_simulations
 
 
-def simulate_density_vs_threshold(size, density, steps, no_simulations):
+def simulate_density_vs_threshold(size, density, steps, num_simulations):
     """
     Simulates different spread thresholds for a fixed density and returns percolation probabilities.
     """
@@ -291,14 +291,14 @@ def simulate_density_vs_threshold(size, density, steps, no_simulations):
 
     for threshold in tqdm(thresholds, desc="Simulating thresholds"):
         percolations.append(
-            simulate_density(size, density, threshold, steps, no_simulations)
+            simulate_density(size, density, threshold, steps, num_simulations)
         )
 
     return thresholds, percolations
 
 
 def simulate_and_collect_percolations(
-    size, densities, spread_threshold, steps, no_simulations
+    size, densities, spread_threshold, steps, num_simulations
 ):
     """
     Simulates percolation probabilities across a range of densities for a fixed spread threshold.
@@ -306,13 +306,13 @@ def simulate_and_collect_percolations(
     percolations = []
     for d in densities:
         percolations.append(
-            simulate_density(size, d, spread_threshold, steps, no_simulations)
+            simulate_density(size, d, spread_threshold, steps, num_simulations)
         )
     return percolations
 
 
 def run_multiple_simulations_for_phase_diagram(
-    size, density, spread_threshold, steps, no_simulations
+    size, density, spread_threshold, steps, num_simulations
 ):
     results = {
         "size": size,
@@ -322,7 +322,7 @@ def run_multiple_simulations_for_phase_diagram(
         "simulation_outcomes": [],
     }
 
-    for i in range(no_simulations):
+    for i in range(num_simulations):
         g = Grid(size, density, spread_threshold)
         g.initialize_board()
 
@@ -365,7 +365,7 @@ def create_results_dict(size, density, spread_threshold, steps):
 
 
 def run_multiple_simulations_for_timeplot_status(
-    size, density, spread_threshold, steps, no_simulations
+    size, density, spread_threshold, steps, num_simulations
 ):
     """
     Runs multiple simulations of the grid model and records the number of cells in each status over time.
@@ -375,7 +375,7 @@ def run_multiple_simulations_for_timeplot_status(
         density (float): The initial density of occupied cells in the grid.
         spread_threshold (float): The threshold probability for a cell to spread gossip.
         steps (int): The number of time steps (iterations) for each simulation.
-        no_simulations (int): The number of simulations to run.
+        num_simulations (int): The number of simulations to run.
 
     Returns:
         tuple: A tuple containing four dictionaries, each representing the outcomes for a specific status:
@@ -390,7 +390,7 @@ def run_multiple_simulations_for_timeplot_status(
     results_clueless = create_results_dict(size, density, spread_threshold, steps)
     results_unoccupied = create_results_dict(size, density, spread_threshold, steps)
 
-    for i in range(no_simulations):
+    for i in range(num_simulations):
         g = Grid(size, density, spread_threshold)
         g.initialize_board()
 
