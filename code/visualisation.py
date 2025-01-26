@@ -399,7 +399,7 @@ def plot_3d_percolation_vs_density_and_threshold(
     plt.show()
 
 
-def plot_phase_diagram_3D(grid_size, steps=1000, num_simulations=100):
+def plot_3d_gossip_spreader_counts(grid_size, steps=1000, num_simulations=100):
     """
     Plots the count of the GOSSIP_SPREADERS against density and spreading threshold as a 3D plot.
 
@@ -414,8 +414,17 @@ def plot_phase_diagram_3D(grid_size, steps=1000, num_simulations=100):
 
     spreader_counts = np.zeros((len(densities), len(spread_thresholds)))
 
-    for i, spread_threshold in enumerate(spread_thresholds):
-        for j, density in enumerate(densities):
+    for i, spread_threshold in tqdm(
+        enumerate(spread_thresholds),
+        desc="Spread Thresholds",
+        total=len(spread_thresholds),
+    ):
+        for j, density in tqdm(
+            enumerate(densities),
+            desc=f"Densities (Threshold {spread_threshold:.2f})",
+            total=len(densities),
+            leave=False,
+        ):
             results = run_multiple_simulations_for_phase_diagram(
                 grid_size, density, spread_threshold, steps, num_simulations
             )

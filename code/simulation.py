@@ -314,6 +314,25 @@ def simulate_and_collect_percolations(
 def run_multiple_simulations_for_phase_diagram(
     grid_size, density, spread_threshold, steps, num_simulations
 ):
+    """
+    Runs multiple simulations for a given density and spread threshold and for each simulation returns
+    the number of gossip spreaders at the end of the simulation.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        density (float): A density value to use for the simulations.
+        spread_threshold (float): A spread threshold value to use for the simulations.
+        steps (int, optional): The max number of time steps for each simulation.
+        num_simulations (int, optional): The number of simulations to run for each density.
+
+    Returns:
+        dict: A dictionary with the following structure:
+            grid_size (int): The size of the grid.
+            density (float): The initial density of occupied cells in the grid.
+            spread_threshold (float): The threshold probability for a cell to spread gossip.
+            steps (int): The number of time steps (iterations) for each simulation.
+            simulation_outcomes (list): A list containing the total number of gossip spreaders at the end of each simulation.
+    """
     results = {
         "grid_size": grid_size,
         "density": density,
