@@ -237,7 +237,6 @@ def plot_percolation_results(
         percolations,
         marker="o",
         linestyle="-",
-        color="blue",
         label=label,
     )
 
@@ -247,12 +246,12 @@ def plot_percolation_vs_density(
 ):
     """
     Runs multiple simulations for 20 different densities and a given spread thresholds,
-    and calculates the probability of a percolation occuring.
+    calculates the probability of a percolation occuring, and plots it.
 
     Parameters:
         grid_size (int): The size of the grid for the simulations.
         spread_threshold (float): A spread threshold value to use for the simulations.
-        steps (int, optional): The max number of time steps for each simulation. Defaults to 100.
+        steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
     """
     densities = np.linspace(0, 1, 20)
@@ -284,29 +283,31 @@ def plot_percolation_vs_spread_threshold(
 ):
     """
     Runs multiple simulations for 20 different spreading thresholds and a given density,
-    and calculates the probability of a percolation occuring.
+    calculates the probability of a percolation occuring, and plots it.
 
     Parameters:
         grid_size (int): The size of the grid for the simulations.
         density (float): A density value to use for the simulations.
-        steps (int, optional): The max number of time steps for each simulation. Defaults to 100.
+        steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
     """
-    thresholds = np.linspace(0, 1, 20)
+    spread_thresholds = np.linspace(0, 1, 20)
     percolations = []
 
     print("Starting simulation for different spread thresholds...")
 
-    for threshold in tqdm(thresholds, desc="Simulating thresholds"):
+    for spread_threshold in tqdm(spread_thresholds, desc="Simulating thresholds"):
         percolations.append(
-            simulate_density(grid_size, density, threshold, steps, num_simulations)
+            simulate_density(
+                grid_size, density, spread_threshold, steps, num_simulations
+            )
         )
 
     print("Simulations completed.")
 
     plt.figure(figsize=(8, 6))
     plt.plot(
-        thresholds,
+        spread_thresholds,
         percolations,
         marker="o",
         linestyle="-",
@@ -321,19 +322,32 @@ def plot_percolation_vs_spread_threshold(
     plt.show()
 
 
-def plot_percolation_vs_density_vs_spread_threshold(grid_size, steps, num_simulations):
+def plot_percolation_vs_density_vs_spread_threshold(
+    grid_size, steps=1000, num_simulations=100
+):
+    """
+    Runs multiple simulations for 20 different densities and 10 different spreading thresholds,
+    calculates the probability of a percolation occuring, and plots it.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
+        num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+    """
     spread_thresholds = np.linspace(0, 1, 10)
     densities = np.linspace(0, 1, 20)
 
     plt.figure(figsize=(10, 8))
-    for spread_threshold in spread_thresholds:
-        print(f"Simulating for spread_threshold = {spread_threshold:.2f}...")
+
+    print("Starting simulation for different spread thresholds and densities...")
+
+    for spread_threshold in tqdm(spread_thresholds, desc="Simulating thresholds"):
         percolations = simulate_and_collect_percolations(
             grid_size, densities, spread_threshold, steps, num_simulations
         )
-        plot_percolation_results(
-            densities, percolations, spread_threshold=spread_threshold
-        )
+        plot_percolation_results(densities, percolations, spread_threshold)
+
+    print("Simulations completed.")
 
     plt.xlabel("Density")
     plt.ylabel("Fraction of simulations with percolation")
