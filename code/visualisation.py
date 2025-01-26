@@ -271,7 +271,7 @@ def plot_percolation_vs_density(
     plt.show()
 
 
-def plot_percolation_vs_spread_threshold(size, density, steps, num_simulations):
+def plot_percolation_vs_spread_threshold(grid_size, density, steps, num_simulations):
     thresholds = np.linspace(0, 1, 20)
     percolations = []
 
@@ -279,7 +279,7 @@ def plot_percolation_vs_spread_threshold(size, density, steps, num_simulations):
 
     for threshold in tqdm(thresholds, desc="Simulating thresholds"):
         percolations.append(
-            simulate_density(size, density, threshold, steps, num_simulations)
+            simulate_density(grid_size, density, threshold, steps, num_simulations)
         )
 
     print("Simulations completed.")
@@ -301,7 +301,7 @@ def plot_percolation_vs_spread_threshold(size, density, steps, num_simulations):
     plt.show()
 
 
-def plot_percolation_vs_density_vs_spread_threshold(size, steps, num_simulations):
+def plot_percolation_vs_density_vs_spread_threshold(grid_size, steps, num_simulations):
     spread_thresholds = np.linspace(0, 1, 10)
     densities = np.linspace(0, 1, 20)
 
@@ -309,7 +309,7 @@ def plot_percolation_vs_density_vs_spread_threshold(size, steps, num_simulations
     for spread_threshold in spread_thresholds:
         print(f"Simulating for spread_threshold = {spread_threshold:.2f}...")
         percolations = simulate_and_collect_percolations(
-            size, densities, spread_threshold, steps, num_simulations
+            grid_size, densities, spread_threshold, steps, num_simulations
         )
         plot_percolation_results(
             densities, percolations, spread_threshold=spread_threshold
@@ -323,7 +323,7 @@ def plot_percolation_vs_density_vs_spread_threshold(size, steps, num_simulations
     plt.show()
 
 
-def plot_3d_percolation_vs_density_and_threshold(size, steps, num_simulations):
+def plot_3d_percolation_vs_density_and_threshold(grid_size, steps, num_simulations):
     densities = np.linspace(0, 1, 20)
     thresholds = np.linspace(0, 1, 20)
 
@@ -332,7 +332,7 @@ def plot_3d_percolation_vs_density_and_threshold(size, steps, num_simulations):
     for threshold in tqdm(thresholds, desc="Simulating thresholds"):
         # Use the simulate_and_collect_percolations function for densities
         percolations = simulate_and_collect_percolations(
-            size, densities, threshold, steps, num_simulations
+            grid_size, densities, threshold, steps, num_simulations
         )
         percolation_data.append(percolations)
 
@@ -355,12 +355,12 @@ def plot_3d_percolation_vs_density_and_threshold(size, steps, num_simulations):
     plt.show()
 
 
-def plot_phase_diagram_3D(size, steps, num_simulations):
+def plot_phase_diagram_3D(grid_size, steps, num_simulations):
     """
     Plots the count of the GOSSIP_SPREADERS against density and spreading threshold as a 3D plot.
 
     Parameters:
-        size (int): Size of the grid.
+        grid_size (int): Size of the grid.
         steps (int): Number of steps in the simulation.
         num_simulations (int): Number of simulations per parameter combination.
     """
@@ -373,7 +373,7 @@ def plot_phase_diagram_3D(size, steps, num_simulations):
     for i, spread_threshold in enumerate(spread_thresholds):
         for j, density in enumerate(densities):
             results = run_multiple_simulations_for_phase_diagram(
-                size, density, spread_threshold, steps, num_simulations
+                grid_size, density, spread_threshold, steps, num_simulations
             )
 
             # average number of GOSSIP_SPREADERS across simulations
@@ -397,19 +397,19 @@ def plot_phase_diagram_3D(size, steps, num_simulations):
     plt.show()
 
 
-def plot_time_status(size, density, spread_threshold, steps, num_simulations):
+def plot_time_status(grid_size, density, spread_threshold, steps, num_simulations):
     """
     Plots the counts of each status over time (iterations)..
 
     Parameters:
-        size (int): The size of the grid.
+        grid_size (int): The size of the grid.
         steps (int): The number of time steps (iterations) for each simulation.
         num_simulations (int): The number of simulations to run.
     """
 
     results_gossip, results_secret, results_clueless, results_unoccupied = (
         run_multiple_simulations_for_timeplot_status(
-            size, density, spread_threshold, steps, num_simulations
+            grid_size, density, spread_threshold, steps, num_simulations
         )
     )
 
