@@ -170,7 +170,7 @@ def aggregate_and_plot_cluster_distributions(
 
 
 def simulate_and_plot_gossip_model_all_combinations(
-    grid_size, densities, spread_thresholds, num_simulations, flag_center=1
+    grid_size, densities, spread_thresholds, num_simulations=100, flag_center=1
 ):
     """
     Runs multiple simulations for all combinations of densities and spread thresholds,
@@ -181,8 +181,8 @@ def simulate_and_plot_gossip_model_all_combinations(
         grid_size (int): The size of the grid for the simulations.
         densities (list): A list of densities to simulate.
         spread_thresholds (list): A list of spread thresholds to simulate.
-        num_simulations (int): The number of simulations to run for each set of initial conditions.
-        flag_center (int): The flag to determine the initial spreader placement.
+        num_simulations (int, optional): The number of simulations to run for each set of initial conditions. Defaults to 100.
+        flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
     """
     # Store aggregated cluster distributions and labels
     all_aggregated_distributions = []
@@ -237,6 +237,7 @@ def plot_percolation_results(
         percolations,
         marker="o",
         linestyle="-",
+        color="blue",
         label=label,
     )
 
@@ -245,7 +246,7 @@ def plot_percolation_vs_density(
     grid_size, spread_threshold, steps=1000, num_simulations=100
 ):
     """
-    Runs multiple simulations for 20 different densities and a given value spread thresholds,
+    Runs multiple simulations for 20 different densities and a given spread thresholds,
     and calculates the probability of a percolation occuring.
 
     Parameters:
@@ -255,14 +256,21 @@ def plot_percolation_vs_density(
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
     """
     densities = np.linspace(0, 1, 20)
+    percolations = []
+
     print("Starting simulation for different densities...")
-    percolations = simulate_and_collect_percolations(
-        grid_size, densities, spread_threshold, steps, num_simulations
-    )
+
+    for density in tqdm(densities, desc="Simulating densities"):
+        percolations.append(
+            simulate_density(
+                grid_size, density, spread_threshold, steps, num_simulations
+            )
+        )
+
     print("Simulations completed.")
 
     plt.figure(figsize=(8, 6))
-    plot_percolation_results(densities, percolations, spread_threshold=spread_threshold)
+    plot_percolation_results(densities, percolations, spread_threshold)
     plt.xlabel("Density")
     plt.ylabel("Fraction of simulations with percolation")
     plt.title("Plot of percolation occurence for different density")
@@ -271,7 +279,19 @@ def plot_percolation_vs_density(
     plt.show()
 
 
-def plot_percolation_vs_spread_threshold(grid_size, density, steps, num_simulations):
+def plot_percolation_vs_spread_threshold(
+    grid_size, density, steps=1000, num_simulations=100
+):
+    """
+    Runs multiple simulations for 20 different spreading thresholds and a given density,
+    and calculates the probability of a percolation occuring.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        density (float): A density value to use for the simulations.
+        steps (int, optional): The max number of time steps for each simulation. Defaults to 100.
+        num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+    """
     thresholds = np.linspace(0, 1, 20)
     percolations = []
 
