@@ -357,9 +357,19 @@ def plot_percolation_vs_density_vs_spread_threshold(
     plt.show()
 
 
-def plot_3d_percolation_vs_density_and_threshold(grid_size, steps, num_simulations):
-    densities = np.linspace(0, 1, 20)
-    thresholds = np.linspace(0, 1, 20)
+def plot_3d_percolation_vs_density_and_threshold(
+    grid_size, steps=1000, num_simulations=100
+):
+    """
+    Plots the percolation probability against density and spreading threshold as a 3D plot.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
+        num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+    """
+    densities = np.linspace(0, 1, 10)
+    thresholds = np.linspace(0, 1, 10)
 
     percolation_data = []
 
@@ -389,14 +399,14 @@ def plot_3d_percolation_vs_density_and_threshold(grid_size, steps, num_simulatio
     plt.show()
 
 
-def plot_phase_diagram_3D(grid_size, steps, num_simulations):
+def plot_phase_diagram_3D(grid_size, steps=1000, num_simulations=100):
     """
     Plots the count of the GOSSIP_SPREADERS against density and spreading threshold as a 3D plot.
 
     Parameters:
-        grid_size (int): Size of the grid.
-        steps (int): Number of steps in the simulation.
-        num_simulations (int): Number of simulations per parameter combination.
+        grid_size (int): The size of the grid for the simulations.
+        steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
+        num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
     """
     # range of densities and spreading thresholds
     densities = np.linspace(0, 1, 10)
