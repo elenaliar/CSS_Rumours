@@ -53,8 +53,8 @@ def show_lecture_hall_over_time(
     left_corner_coordinate = (len(init_grid[0]) // 4) - 0.5
     square = Rectangle(
         (left_corner_coordinate, left_corner_coordinate),
-        len(init_grid[0]) // 2 + 1,
-        len(init_grid[0]) // 2 + 1,
+        len(init_grid[0]) // 2,
+        len(init_grid[0]) // 2,
         edgecolor="dimgray",
         facecolor="none",
         linewidth=2,

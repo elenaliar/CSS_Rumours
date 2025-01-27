@@ -6,6 +6,8 @@ from enum import Enum
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import PillowWriter
+from matplotlib.colors import ListedColormap
+from matplotlib.patches import Patch, Rectangle
 
 
 class Status(Enum):
@@ -386,6 +388,32 @@ class Grid:
 
         self.lecture_hall = new_lecture_hall
 
+    def add_central_square(self):
+        ax = plt.gca()
+        left_corner_coordinate = (self.size // 4) - 0.5
+        square = Rectangle(
+            (left_corner_coordinate, left_corner_coordinate),
+            self.size // 2,
+            self.size // 2,
+            edgecolor="dimgray",
+            facecolor="none",
+            linewidth=2,
+        )
+        ax.add_patch(square)
+
+    def add_outer_box(self):
+        ax = plt.gca()
+        square = Rectangle(
+            (-0.5, -0.5),
+            self.size,
+            self.size,
+            edgecolor="black",
+            facecolor="none",
+            linewidth=3,
+        )
+        ax.add_patch(square)
+        plt.axis("off")
+
     def show_grid(self, iteration=None):
         """
         Displays the current state of the grid using `matplotlib`.
@@ -398,16 +426,39 @@ class Grid:
         """
         grid = [[cell.get_status().value for cell in row] for row in self.lecture_hall]
 
-        center_start, center_end = self.size // 4, 3 * self.size // 4
-        for i in range(center_start, center_end):
-            for j in range(center_start, center_end):
-                if grid[i][j] != Status.UNOCCUPIED.value:
-                    grid[i][j] += 0.5
+        colors = [
+            Colors.UNOCCUPIED.value,
+            Colors.CLUELESS.value,
+            Colors.SECRET_KEEPER.value,
+            Colors.GOSSIP_SPREADER.value,
+        ]
+        cmap = ListedColormap(colors)
 
-        plt.imshow(grid, cmap="coolwarm", interpolation="none")
-        plt.colorbar(label="Status")
+        plt.imshow(grid, cmap=cmap, interpolation="none")
+
+        # Add a square specifying the central area and an outer border
+        self.add_central_square()
+        self.add_outer_box()
+
+        # Add legend to the plot
+        legend_patches = [
+            Patch(
+                facecolor=color, edgecolor="black", label=f"{state}"
+            )  # TODO: use the names of states instead of numbers
+            for state, color in zip(
+                ["UNOCCUPIED", "CLUELESS", "SECRET KEEPER", "GOSSIP SPREADER"], colors
+            )
+        ]
+
+        plt.legend(
+            handles=legend_patches,
+            loc="upper right",
+            bbox_to_anchor=(1.33, 1),
+        )
+
         if iteration is not None:
             plt.title(f"Iteration {iteration}")
+
         plt.show()
 
     def save_grid(self, iteration=None, save_path=None):
