@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from IPython.display import HTML
 from matplotlib import animation
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from tqdm import tqdm
 from simulation import (
     run_multiple_simulations_for_timeplot_status,
@@ -233,7 +233,11 @@ def simulate_and_plot_gossip_model_all_combinations(
 
 
 def plot_percolation_results(
-    densities, percolations, spread_threshold=None, label=None
+    densities,
+    percolations,
+    spread_threshold=None,
+    label=None,
+    color=Colors.DARK_PINK.value,
 ):
     """
     Plots percolation results for different densities or spread thresholds.
@@ -244,11 +248,7 @@ def plot_percolation_results(
         else "Percolation"
     )
     plt.plot(
-        densities,
-        percolations,
-        marker="o",
-        linestyle="-",
-        label=label,
+        densities, percolations, marker="o", linestyle="-", label=label, color=color
     )
 
 
@@ -346,17 +346,33 @@ def plot_percolation_vs_density_vs_spread_threshold(
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
     """
     spread_thresholds = np.linspace(0, 1, 10)
-    densities = np.linspace(0, 1, 20)
+    # densities = np.linspace(0, 1, 20)
+    densities = np.linspace(0, 1, 10)
 
     plt.figure(figsize=(10, 8))
 
+    # Define a custom pink colormap (from dark pink to light pink)
+    pink_colormap = LinearSegmentedColormap.from_list(
+        "pink_shades",
+        [Colors.DARK_PINK.value, Colors.LIGHT_PINK.value],
+        N=len(spread_thresholds),  # Dark pink to light pink
+    )
+
+    colors = [pink_colormap(i) for i in range(len(spread_thresholds))]
+
     print("Starting simulation for different spread thresholds and densities...")
 
-    for spread_threshold in tqdm(spread_thresholds, desc="Simulating thresholds"):
+    for i, spread_threshold in tqdm(
+        enumerate(spread_thresholds),
+        desc="Simulating thresholds",
+        total=len(spread_thresholds),
+    ):
         percolations = simulate_and_collect_percolations(
             grid_size, densities, spread_threshold, steps, num_simulations
         )
-        plot_percolation_results(densities, percolations, spread_threshold)
+        plot_percolation_results(
+            densities, percolations, spread_threshold, color=colors[i]
+        )
 
     print("Simulations completed.")
 
