@@ -19,6 +19,17 @@ class Status(Enum):
     GOSSIP_SPREADER = 3
 
 
+class Colors(Enum):
+    """
+    Enum representing the colors used for visualisations
+    """
+
+    UNOCCUPIED = LIGHTGRAY = "#D3D3D3"
+    CLUELESS = WHITESMOKE = "#F5F5F5"
+    SECRET_KEEPER = LIGHT_PINK = "#FFB6C1"
+    GOSSIP_SPREADER = DARK_PINK = "#B03060"
+
+
 class Cell:
     """
     Represents a cell in a grid, with a status and spreading probability.

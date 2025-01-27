@@ -13,6 +13,7 @@ from simulation import (
     aggregate_cluster_distributions,
     run_multiple_simulations_same_initial_conditions,
 )
+from ca_lecture_hall_model import Colors
 
 
 def show_lecture_hall_over_time(
@@ -35,12 +36,18 @@ def show_lecture_hall_over_time(
     ]
 
     fig = plt.figure()
-    colors = ["lightgray", "white", "gold", "goldenrod"]
+    # colors = ["lightgray", "white", "gold", "goldenrod"]
+    colors = [
+        Colors.UNOCCUPIED.value,
+        Colors.CLUELESS.value,
+        Colors.SECRET_KEEPER.value,
+        Colors.GOSSIP_SPREADER.value,
+    ]
     cmap = ListedColormap(colors)
 
     im = plt.imshow(init_grid, cmap=cmap, interpolation="none", animated=True)
 
-    # Add a square specifying the central 10x10 area
+    # Add a square specifying the central area
     ax = plt.gca()
     left_corner_coordinate = (len(init_grid[0]) // 4) - 0.5
     square = Rectangle(
@@ -53,19 +60,33 @@ def show_lecture_hall_over_time(
     )
     ax.add_patch(square)
 
+    # Remove axes and add black square as a border
+    square = Rectangle(
+        (-0.5, -0.5),
+        len(init_grid[0]),
+        len(init_grid[0]),
+        edgecolor="black",
+        facecolor="none",
+        linewidth=3,
+    )
+    ax.add_patch(square)
+    plt.axis("off")
+
     # Add legend to the plot
     legend_patches = [
         Patch(
-            facecolor=color, edgecolor="black", label=f"State {i}"
+            facecolor=color, edgecolor="black", label=f"{state}"
         )  # TODO: use the names of states instead of numbers
-        for i, color in enumerate(colors)
+        for state, color in zip(
+            ["Unoccupied", "Clueless", "Secret keeper", "Gossip spreader"], colors
+        )
     ]
 
     plt.legend(
         handles=legend_patches,
-        title="States",
+        title="State",
         loc="upper right",
-        bbox_to_anchor=(1.2, 1),
+        bbox_to_anchor=(1.3, 1),
     )
 
     # Get the state number for each cell
@@ -450,7 +471,9 @@ def plot_3d_gossip_spreader_counts(grid_size, steps=1000, num_simulations=100):
     plt.show()
 
 
-def plot_time_status(grid_size, density, spread_threshold, steps, num_simulations, flag_center=1):
+def plot_time_status(
+    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
+):
     """
     Plots the counts of each status over time (iterations)..
 
