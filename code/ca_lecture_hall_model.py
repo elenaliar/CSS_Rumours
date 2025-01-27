@@ -427,7 +427,7 @@ class Grid:
         plt.legend(
             handles=legend_patches,
             loc="upper right",
-            bbox_to_anchor=(1.33, 1),
+            bbox_to_anchor=(1.3, 1),
         )
 
     def show_grid(self, iteration=None):

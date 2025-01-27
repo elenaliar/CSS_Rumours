@@ -3,7 +3,6 @@ import numpy as np
 from IPython.display import HTML
 from matplotlib import animation
 from matplotlib.colors import ListedColormap
-from matplotlib.patches import Patch, Rectangle
 from tqdm import tqdm
 from simulation import (
     run_multiple_simulations_for_timeplot_status,
@@ -47,46 +46,10 @@ def show_lecture_hall_over_time(
 
     im = plt.imshow(init_grid, cmap=cmap, interpolation="none", animated=True)
 
-    # Add a square specifying the central area
-    ax = plt.gca()
-    left_corner_coordinate = (len(init_grid[0]) // 4) - 0.5
-    square = Rectangle(
-        (left_corner_coordinate, left_corner_coordinate),
-        len(init_grid[0]) // 2,
-        len(init_grid[0]) // 2,
-        edgecolor="dimgray",
-        facecolor="none",
-        linewidth=2,
-    )
-    ax.add_patch(square)
-
-    # Remove axes and add black square as a border
-    square = Rectangle(
-        (-0.5, -0.5),
-        len(init_grid[0]),
-        len(init_grid[0]),
-        edgecolor="black",
-        facecolor="none",
-        linewidth=3,
-    )
-    ax.add_patch(square)
-    plt.axis("off")
-
-    # Add legend to the plot
-    legend_patches = [
-        Patch(
-            facecolor=color, edgecolor="black", label=f"{state}"
-        )  # TODO: use the names of states instead of numbers
-        for state, color in zip(
-            ["UNOCCUPIED", "CLUELESS", "SECRET KEEPER", "GOSSIP SPREADER"], colors
-        )
-    ]
-
-    plt.legend(
-        handles=legend_patches,
-        loc="upper right",
-        bbox_to_anchor=(1.33, 1),
-    )
+    # Add a square specifying the central area, an outer border and legend
+    cell_grids[0].add_central_square()
+    cell_grids[0].add_outer_box()
+    cell_grids[0].add_legend(colors)
 
     # Get the state number for each cell
     grids = [
@@ -94,21 +57,17 @@ def show_lecture_hall_over_time(
         for cell_grid in cell_grids
     ]
 
-    # animation function. This is called sequentially
+    # Animation function, called sequentally
     def animate(i):
         im.set_array(grids[i])
         return (im,)
 
-    # call the animator.  blit=True means only re-draw the parts that have changed.
+    # Call the animator
     anim = animation.FuncAnimation(
         fig, animate, frames=len(grids), interval=200, blit=True
     )
 
-    # save the animation as an mp4.  This requires ffmpeg or mencoder to be
-    # installed.  The extra_args ensure that the x264 codec is used, so that
-    # the video can be embedded in html5.  You may need to adjust this for
-    # your system: for more information, see
-    # http://matplotlib.sourceforge.net/api/animation_api.html
+    # Save the animation as an mp4
     if save_animation:
         anim.save(animation_name, fps=30, extra_args=["-vcodec", "libx264"])
 
