@@ -12,8 +12,9 @@ from simulation import (
     simulate_density,
     aggregate_cluster_distributions,
     run_multiple_simulations_same_initial_conditions,
+    run_simulation,
 )
-from ca_lecture_hall_model import Colors
+from ca_lecture_hall_model import Colors, Grid
 
 
 def show_lecture_hall_over_time(
@@ -114,6 +115,38 @@ def show_lecture_hall_over_time(
         anim.save(animation_name, fps=30, extra_args=["-vcodec", "libx264"])
 
     return HTML(anim.to_html5_video())
+
+
+def simulate_and_create_video(
+    grid_size,
+    density,
+    spread_threshold,
+    steps=1000,
+    flag_center=1,
+    save_animation=False,
+    animation_name="gossip_spread_simulation.mp4",
+):
+    """
+    Runs one simulation for given grid size, density and spread threshold and
+    visualises the spread of a gossip over time as an animated grid outlining the central region.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        density (float): A density value to use for the simulations.
+        spread_threshold (float): A spread threshold value to use for the simulations.
+        steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
+        flag_center (int, optional): Flag to determine the position of initial spreader. 1 for central area, 0 for edges. Defaults to 1.
+        save_animation (bool, optional): Whether to save the animation as an MP4 file. Default is False.
+        animation_name (str, optional): The name of the file to save the animation if `save_animation` is True.
+
+    Returns:
+            HTML: An HTML object containing the animation for rendering in Jupyter Notebook.
+    """
+    g = Grid(grid_size, density, spread_threshold)
+    g.initialize_board(flag_center)
+    grids = run_simulation(g, steps)
+
+    return show_lecture_hall_over_time(grids, save_animation, animation_name)
 
 
 def plot_log_log_distribution(cluster_distribution, density, spread_threshold, color):
