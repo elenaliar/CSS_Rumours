@@ -504,6 +504,10 @@ class Grid:
             or self.dfs(visited, i - 1, j, target_row, target_col)
             or self.dfs(visited, i, j + 1, target_row, target_col)
             or self.dfs(visited, i, j - 1, target_row, target_col)
+            or self.dfs(visited, i + 1, j + 1, target_row, target_col)
+            or self.dfs(visited, i - 1, j - 1, target_row, target_col)
+            or self.dfs(visited, i + 1, j - 1, target_row, target_col)
+            or self.dfs(visited, i - 1, j + 1, target_row, target_col)
         )
 
     def check_percolation_direction(self, direction):

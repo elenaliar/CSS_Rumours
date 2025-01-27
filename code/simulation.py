@@ -50,11 +50,14 @@ def run_simulation(grid, steps=1000):
 def count_statuses(grids):
     """
     Iterates through all the grids and for each grid calculates the number of cells of each status.
+    Iterates through all the grids and for each grid calculates the number of cells of each status.
 
     Parameters:
         grids (list of Grid): List of grids.
+        grids (list of Grid): List of grids.
 
     Returns:
+        (dict of list): A dictionary containing lists with status counts, one list for each status and one entry for each grid.
         (dict of list): A dictionary containing lists with status counts, one list for each status and one entry for each grid.
     """
     status_counts = {
@@ -145,6 +148,10 @@ def calculate_cluster_size_distribution(grids):
         cluster_size += dfs_size(grid, visited, i - 1, j)  # Up
         cluster_size += dfs_size(grid, visited, i, j + 1)  # Right
         cluster_size += dfs_size(grid, visited, i, j - 1)  # Left
+        cluster_size += dfs_size(grid, visited, i + 1, j + 1)  # Down-Right
+        cluster_size += dfs_size(grid, visited, i + 1, j - 1) # Down-Left
+        cluster_size += dfs_size(grid, visited, i - 1, j + 1) # Up-Right
+        cluster_size += dfs_size(grid, visited, i - 1, j - 1) # Up-Left
 
         return cluster_size
 
@@ -177,7 +184,7 @@ def calculate_cluster_size_distribution(grids):
 
 
 def run_multiple_simulations_for_percolation(
-    grid_size, density, spread_threshold, steps, num_simulations
+    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
 ):
     """
     Runs multiple simulations for a given density and spread threshold.
@@ -192,7 +199,7 @@ def run_multiple_simulations_for_percolation(
 
     for _ in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
-        g.initialize_board()
+        g.initialize_board(flag_center)
         run_simulation(g, steps)
         results["simulation_outcomes"].append(g.check_percolation())
 
@@ -312,7 +319,7 @@ def simulate_and_collect_percolations(
 
 
 def run_multiple_simulations_for_phase_diagram(
-    grid_size, density, spread_threshold, steps, num_simulations
+    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
 ):
     """
     Runs multiple simulations for a given density and spread threshold and for each simulation returns
@@ -343,7 +350,9 @@ def run_multiple_simulations_for_phase_diagram(
 
     for i in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
-        g.initialize_board()
+    for i in range(num_simulations):
+        g = Grid(grid_size, density, spread_threshold)
+        g.initialize_board(flag_center)
 
         grids = run_simulation(g, steps)
 
@@ -384,7 +393,8 @@ def create_results_dict(grid_size, density, spread_threshold, steps):
 
 
 def run_multiple_simulations_for_timeplot_status(
-    grid_size, density, spread_threshold, steps, num_simulations
+    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
+    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
 ):
     """
     Runs multiple simulations of the grid model and records the number of cells in each status over time.
@@ -407,13 +417,13 @@ def run_multiple_simulations_for_timeplot_status(
     results_gossip = create_results_dict(grid_size, density, spread_threshold, steps)
     results_secret = create_results_dict(grid_size, density, spread_threshold, steps)
     results_clueless = create_results_dict(grid_size, density, spread_threshold, steps)
-    results_unoccupied = create_results_dict(
-        grid_size, density, spread_threshold, steps
-    )
+    results_unoccupied = create_results_dict(grid_size, density, spread_threshold, steps)
 
     for i in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
-        g.initialize_board()
+    for i in range(num_simulations):
+        g = Grid(grid_size, density, spread_threshold)
+        g.initialize_board(flag_center)
 
         grids = run_simulation(g, steps)
 
