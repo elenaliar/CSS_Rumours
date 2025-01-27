@@ -8,7 +8,7 @@ from tqdm import tqdm
 def run_simulation(grid, steps=1000):
     """
     Runs the simulation for a specified number of steps, updating the grid at each iteration.
-    Stops iteration if no cell status changes for 3 consecutive steps.
+    Stops simulation if no cell status changes anymore.
 
     Parameters:
         grid (Grid): The initial grid to run the simulation on
@@ -22,24 +22,17 @@ def run_simulation(grid, steps=1000):
 
     all_grids = [copy.deepcopy(grid)]
 
-    same = 0
-    prev_grid = None
+    prev_grid = copy.deepcopy(grid.lecture_hall)
 
     for step in range(steps):
-        current_grid = copy.deepcopy(grid.lecture_hall)
-
-        # check if grid is the same as the previous grid
-        if prev_grid is not None and prev_grid == current_grid:
-            same += 1
-        else:
-            same = 0
-
-        # stop simulation if no cell status changed for 3 consecutive steps
-        if same == 3:
-            break
-
         # update the grid
         grid.update_grid()
+
+        current_grid = copy.deepcopy(grid.lecture_hall)
+
+        # check if any changes happened or not
+        if prev_grid == current_grid:
+            break
 
         prev_grid = current_grid
         all_grids.append(copy.deepcopy(grid))
@@ -149,9 +142,9 @@ def calculate_cluster_size_distribution(grids):
         cluster_size += dfs_size(grid, visited, i, j + 1)  # Right
         cluster_size += dfs_size(grid, visited, i, j - 1)  # Left
         cluster_size += dfs_size(grid, visited, i + 1, j + 1)  # Down-Right
-        cluster_size += dfs_size(grid, visited, i + 1, j - 1) # Down-Left
-        cluster_size += dfs_size(grid, visited, i - 1, j + 1) # Up-Right
-        cluster_size += dfs_size(grid, visited, i - 1, j - 1) # Up-Left
+        cluster_size += dfs_size(grid, visited, i + 1, j - 1)  # Down-Left
+        cluster_size += dfs_size(grid, visited, i - 1, j + 1)  # Up-Right
+        cluster_size += dfs_size(grid, visited, i - 1, j - 1)  # Up-Left
 
         return cluster_size
 
@@ -414,7 +407,9 @@ def run_multiple_simulations_for_timeplot_status(
     results_gossip = create_results_dict(grid_size, density, spread_threshold, steps)
     results_secret = create_results_dict(grid_size, density, spread_threshold, steps)
     results_clueless = create_results_dict(grid_size, density, spread_threshold, steps)
-    results_unoccupied = create_results_dict(grid_size, density, spread_threshold, steps)
+    results_unoccupied = create_results_dict(
+        grid_size, density, spread_threshold, steps
+    )
 
     for i in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
