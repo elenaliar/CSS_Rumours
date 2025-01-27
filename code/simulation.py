@@ -350,8 +350,6 @@ def run_multiple_simulations_for_phase_diagram(
 
     for i in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
-    for i in range(num_simulations):
-        g = Grid(grid_size, density, spread_threshold)
         g.initialize_board(flag_center)
 
         grids = run_simulation(g, steps)
@@ -394,7 +392,6 @@ def create_results_dict(grid_size, density, spread_threshold, steps):
 
 def run_multiple_simulations_for_timeplot_status(
     grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
-    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
 ):
     """
     Runs multiple simulations of the grid model and records the number of cells in each status over time.
@@ -419,8 +416,6 @@ def run_multiple_simulations_for_timeplot_status(
     results_clueless = create_results_dict(grid_size, density, spread_threshold, steps)
     results_unoccupied = create_results_dict(grid_size, density, spread_threshold, steps)
 
-    for i in range(num_simulations):
-        g = Grid(grid_size, density, spread_threshold)
     for i in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
         g.initialize_board(flag_center)
