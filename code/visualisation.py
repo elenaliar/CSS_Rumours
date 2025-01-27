@@ -450,19 +450,34 @@ def plot_3d_gossip_spreader_counts(grid_size, steps=1000, num_simulations=100):
     plt.show()
 
 
+<<<<<<< HEAD
 def plot_time_status(grid_size, density, spread_threshold, steps, num_simulations):
+=======
+def plot_time_status(size, density, spread_threshold, steps, no_simulations, flag_center=1):
+>>>>>>> 5185e1b (fixed bug in percolation function)
     """
     Plots the counts of each status over time (iterations)..
 
     Parameters:
         grid_size (int): The size of the grid.
         steps (int): The number of time steps (iterations) for each simulation.
+<<<<<<< HEAD
         num_simulations (int): The number of simulations to run.
+=======
+        no_simulations (int): The number of simulations to run.
+        density (float): The density of the grid.
+        spread_threshold (float): The spreading threshold for the gossip model.
+        flag_center (int): Flag to determine the position of initial spreader
+>>>>>>> 5185e1b (fixed bug in percolation function)
     """
 
     results_gossip, results_secret, results_clueless, results_unoccupied = (
         run_multiple_simulations_for_timeplot_status(
+<<<<<<< HEAD
             grid_size, density, spread_threshold, steps, num_simulations
+=======
+            size, density, spread_threshold, steps, no_simulations, flag_center
+>>>>>>> 5185e1b (fixed bug in percolation function)
         )
     )
 

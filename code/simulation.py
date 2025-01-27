@@ -145,6 +145,10 @@ def calculate_cluster_size_distribution(grids):
         cluster_size += dfs_size(grid, visited, i - 1, j)  # Up
         cluster_size += dfs_size(grid, visited, i, j + 1)  # Right
         cluster_size += dfs_size(grid, visited, i, j - 1)  # Left
+        cluster_size += dfs_size(grid, visited, i + 1, j + 1)  # Down-Right
+        cluster_size += dfs_size(grid, visited, i + 1, j - 1) # Down-Left
+        cluster_size += dfs_size(grid, visited, i - 1, j + 1) # Up-Right
+        cluster_size += dfs_size(grid, visited, i - 1, j - 1) # Up-Left
 
         return cluster_size
 
@@ -177,7 +181,7 @@ def calculate_cluster_size_distribution(grids):
 
 
 def run_multiple_simulations_for_percolation(
-    grid_size, density, spread_threshold, steps, num_simulations
+    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
 ):
     """
     Runs multiple simulations for a given density and spread threshold.
@@ -192,7 +196,7 @@ def run_multiple_simulations_for_percolation(
 
     for _ in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
-        g.initialize_board()
+        g.initialize_board(flag_center)
         run_simulation(g, steps)
         results["simulation_outcomes"].append(g.check_percolation())
 
@@ -312,27 +316,8 @@ def simulate_and_collect_percolations(
 
 
 def run_multiple_simulations_for_phase_diagram(
-    grid_size, density, spread_threshold, steps, num_simulations
+    size, density, spread_threshold, steps, no_simulations
 ):
-    """
-    Runs multiple simulations for a given density and spread threshold and for each simulation returns
-    the number of gossip spreaders at the end of the simulation.
-
-    Parameters:
-        grid_size (int): The size of the grid for the simulations.
-        density (float): A density value to use for the simulations.
-        spread_threshold (float): A spread threshold value to use for the simulations.
-        steps (int, optional): The max number of time steps for each simulation.
-        num_simulations (int, optional): The number of simulations to run for each density.
-
-    Returns:
-        dict: A dictionary with the following structure:
-            grid_size (int): The size of the grid.
-            density (float): The initial density of occupied cells in the grid.
-            spread_threshold (float): The threshold probability for a cell to spread gossip.
-            steps (int): The number of time steps (iterations) for each simulation.
-            simulation_outcomes (list): A list containing the total number of gossip spreaders at the end of each simulation.
-    """
     results = {
         "grid_size": grid_size,
         "density": density,
@@ -343,7 +328,7 @@ def run_multiple_simulations_for_phase_diagram(
 
     for i in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
-        g.initialize_board()
+        g.initialize_board(flag_center)
 
         grids = run_simulation(g, steps)
 
@@ -384,7 +369,7 @@ def create_results_dict(grid_size, density, spread_threshold, steps):
 
 
 def run_multiple_simulations_for_timeplot_status(
-    grid_size, density, spread_threshold, steps, num_simulations
+    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
 ):
     """
     Runs multiple simulations of the grid model and records the number of cells in each status over time.
@@ -413,7 +398,7 @@ def run_multiple_simulations_for_timeplot_status(
 
     for i in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
-        g.initialize_board()
+        g.initialize_board(flag_center)
 
         grids = run_simulation(g, steps)
 
