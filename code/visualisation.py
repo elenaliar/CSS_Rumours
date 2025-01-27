@@ -79,7 +79,7 @@ def show_lecture_hall_over_time(
             facecolor=color, edgecolor="black", label=f"{state}"
         )  # TODO: use the names of states instead of numbers
         for state, color in zip(
-            ["Unoccupied", "Clueless", "Secret keeper", "Gossip spreader"], colors
+            ["UNOCCUPIED", "CLUELESS", "SECRET KEEPER", "GOSSIP SPREADER"], colors
         )
     ]
 
@@ -542,10 +542,27 @@ def plot_time_status(
     iterations = range(len(average_unoccupied))
 
     plt.figure(figsize=(10, 6))
-    plt.plot(iterations, average_unoccupied, label="UNOCCUPIED")
-    plt.plot(iterations, average_clueless, label="CLUELESS")
-    plt.plot(iterations, average_secret, label="SECRET_KEEPER")
-    plt.plot(iterations, average_gossip, label="GOSSIP_SPREADER")
+    plt.plot(
+        iterations,
+        average_unoccupied,
+        label="UNOCCUPIED",
+        color=Colors.UNOCCUPIED.value,
+    )
+    plt.plot(
+        iterations, average_clueless, label="CLUELESS", color=Colors.CLUELESS_DARK.value
+    )
+    plt.plot(
+        iterations,
+        average_secret,
+        label="SECRET KEEPER",
+        color=Colors.SECRET_KEEPER.value,
+    )
+    plt.plot(
+        iterations,
+        average_gossip,
+        label="GOSSIP SPREADER",
+        color=Colors.GOSSIP_SPREADER.value,
+    )
     plt.xlabel("Time Steps")
     plt.ylabel("Number of Cells")
     plt.title("Status Counts Over Time")
