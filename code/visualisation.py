@@ -85,9 +85,8 @@ def show_lecture_hall_over_time(
 
     plt.legend(
         handles=legend_patches,
-        title="State",
         loc="upper right",
-        bbox_to_anchor=(1.3, 1),
+        bbox_to_anchor=(1.33, 1),
     )
 
     # Get the state number for each cell
