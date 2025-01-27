@@ -550,13 +550,26 @@ class Grid:
         else:
             raise ValueError("direction must be either 'vertical' or 'horizontal'")
 
-    def check_percolation(self):
+    def check_percolation(self, direction="both"):
         """
         Checks if percolation occurs in the grid by checking for vertical and horizontal percolation.
 
         Returns:
             bool: True if both vertical and horizontal percolation occurs, False otherwise.
         """
-        return self.check_percolation_direction(
-            "vertical"
-        ) and self.check_percolation_direction("horizontal")
+        if direction == "vertical":
+            return self.check_percolation_direction("vertical")
+        elif direction == "horizontal":
+            return self.check_percolation_direction("horizontal")
+        elif direction == "both":
+            return self.check_percolation_direction(
+                "vertical"
+            ) and self.check_percolation_direction("horizontal")
+        elif direction == "any":
+            return self.check_percolation_direction(
+                "vertical"
+            ) or self.check_percolation_direction("horizontal")
+        else:
+            raise ValueError(
+                "direction must be either 'vertical' or 'horizontal', 'both' or 'any'"
+            )
