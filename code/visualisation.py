@@ -450,7 +450,9 @@ def plot_3d_gossip_spreader_counts(grid_size, steps=1000, num_simulations=100):
     plt.show()
 
 
-def plot_time_status(grid_size, density, spread_threshold, steps, num_simulations, flag_center=1):
+def plot_time_status(
+    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
+):
     """
     Plots the counts of each status over time (iterations)..
 
@@ -468,20 +470,40 @@ def plot_time_status(grid_size, density, spread_threshold, steps, num_simulation
         )
     )
 
-    # average results over simulations
-    average_gossip = [
-        sum(x) / num_simulations for x in zip(*results_gossip["simulation_outcomes"])
-    ]
-    average_secret = [
-        sum(x) / num_simulations for x in zip(*results_secret["simulation_outcomes"])
-    ]
-    average_clueless = [
-        sum(x) / num_simulations for x in zip(*results_clueless["simulation_outcomes"])
-    ]
-    average_unoccupied = [
-        sum(x) / num_simulations
-        for x in zip(*results_unoccupied["simulation_outcomes"])
-    ]
+    # Find the maximum length of the arrays
+    max_length = max(len(arr) for arr in results_gossip["simulation_outcomes"])
+
+    # Initialize a list to store the averages
+    average_gossip = []
+    average_secret = []
+    average_clueless = []
+    average_unoccupied = []
+
+    # Iterate through each time step up to the max length
+    for i in range(max_length):
+        # Collect all values at the current time step
+        values_gossip = [
+            arr[i] if i < len(arr) else arr[-1]
+            for arr in results_gossip["simulation_outcomes"]
+        ]
+        values_secret = [
+            arr[i] if i < len(arr) else arr[-1]
+            for arr in results_secret["simulation_outcomes"]
+        ]
+        values_clueless = [
+            arr[i] if i < len(arr) else arr[-1]
+            for arr in results_clueless["simulation_outcomes"]
+        ]
+        values_unoccupied = [
+            arr[i] if i < len(arr) else arr[-1]
+            for arr in results_unoccupied["simulation_outcomes"]
+        ]
+
+        # Calculate the average and add it to the list
+        average_gossip.append(sum(values_gossip) / num_simulations)
+        average_secret.append(sum(values_secret) / num_simulations)
+        average_clueless.append(sum(values_clueless) / num_simulations)
+        average_unoccupied.append(sum(values_unoccupied) / num_simulations)
 
     iterations = range(len(average_unoccupied))
 
