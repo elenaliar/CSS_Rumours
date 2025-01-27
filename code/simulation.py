@@ -50,11 +50,14 @@ def run_simulation(grid, steps=1000):
 def count_statuses(grids):
     """
     Iterates through all the grids and for each grid calculates the number of cells of each status.
+    Iterates through all the grids and for each grid calculates the number of cells of each status.
 
     Parameters:
         grids (list of Grid): List of grids.
+        grids (list of Grid): List of grids.
 
     Returns:
+        (dict of list): A dictionary containing lists with status counts, one list for each status and one entry for each grid.
         (dict of list): A dictionary containing lists with status counts, one list for each status and one entry for each grid.
     """
     status_counts = {
@@ -316,8 +319,27 @@ def simulate_and_collect_percolations(
 
 
 def run_multiple_simulations_for_phase_diagram(
-    size, density, spread_threshold, steps, no_simulations
+    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
 ):
+    """
+    Runs multiple simulations for a given density and spread threshold and for each simulation returns
+    the number of gossip spreaders at the end of the simulation.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        density (float): A density value to use for the simulations.
+        spread_threshold (float): A spread threshold value to use for the simulations.
+        steps (int, optional): The max number of time steps for each simulation.
+        num_simulations (int, optional): The number of simulations to run for each density.
+
+    Returns:
+        dict: A dictionary with the following structure:
+            grid_size (int): The size of the grid.
+            density (float): The initial density of occupied cells in the grid.
+            spread_threshold (float): The threshold probability for a cell to spread gossip.
+            steps (int): The number of time steps (iterations) for each simulation.
+            simulation_outcomes (list): A list containing the total number of gossip spreaders at the end of each simulation.
+    """
     results = {
         "grid_size": grid_size,
         "density": density,
@@ -326,6 +348,8 @@ def run_multiple_simulations_for_phase_diagram(
         "simulation_outcomes": [],
     }
 
+    for i in range(num_simulations):
+        g = Grid(grid_size, density, spread_threshold)
     for i in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
         g.initialize_board(flag_center)
@@ -370,6 +394,7 @@ def create_results_dict(grid_size, density, spread_threshold, steps):
 
 def run_multiple_simulations_for_timeplot_status(
     grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
+    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
 ):
     """
     Runs multiple simulations of the grid model and records the number of cells in each status over time.
@@ -392,10 +417,10 @@ def run_multiple_simulations_for_timeplot_status(
     results_gossip = create_results_dict(grid_size, density, spread_threshold, steps)
     results_secret = create_results_dict(grid_size, density, spread_threshold, steps)
     results_clueless = create_results_dict(grid_size, density, spread_threshold, steps)
-    results_unoccupied = create_results_dict(
-        grid_size, density, spread_threshold, steps
-    )
+    results_unoccupied = create_results_dict(grid_size, density, spread_threshold, steps)
 
+    for i in range(num_simulations):
+        g = Grid(grid_size, density, spread_threshold)
     for i in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
         g.initialize_board(flag_center)

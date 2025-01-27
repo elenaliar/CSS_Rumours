@@ -451,10 +451,14 @@ def plot_3d_gossip_spreader_counts(grid_size, steps=1000, num_simulations=100):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 def plot_time_status(grid_size, density, spread_threshold, steps, num_simulations):
 =======
 def plot_time_status(size, density, spread_threshold, steps, no_simulations, flag_center=1):
 >>>>>>> 5185e1b (fixed bug in percolation function)
+=======
+def plot_time_status(grid_size, density, spread_threshold, steps, num_simulations, flag_center=1):
+>>>>>>> c6f6cc3 (resolved conflicts)
     """
     Plots the counts of each status over time (iterations)..
 
@@ -462,9 +466,13 @@ def plot_time_status(size, density, spread_threshold, steps, no_simulations, fla
         grid_size (int): The size of the grid.
         steps (int): The number of time steps (iterations) for each simulation.
 <<<<<<< HEAD
+<<<<<<< HEAD
         num_simulations (int): The number of simulations to run.
 =======
         no_simulations (int): The number of simulations to run.
+=======
+        num_simulations (int): The number of simulations to run.
+>>>>>>> c6f6cc3 (resolved conflicts)
         density (float): The density of the grid.
         spread_threshold (float): The spreading threshold for the gossip model.
         flag_center (int): Flag to determine the position of initial spreader
@@ -474,10 +482,14 @@ def plot_time_status(size, density, spread_threshold, steps, no_simulations, fla
     results_gossip, results_secret, results_clueless, results_unoccupied = (
         run_multiple_simulations_for_timeplot_status(
 <<<<<<< HEAD
+<<<<<<< HEAD
             grid_size, density, spread_threshold, steps, num_simulations
 =======
             size, density, spread_threshold, steps, no_simulations, flag_center
 >>>>>>> 5185e1b (fixed bug in percolation function)
+=======
+            grid_size, density, spread_threshold, steps, num_simulations, flag_center
+>>>>>>> c6f6cc3 (resolved conflicts)
         )
     )
 
@@ -492,8 +504,12 @@ def plot_time_status(size, density, spread_threshold, steps, no_simulations, fla
         sum(x) / num_simulations for x in zip(*results_clueless["simulation_outcomes"])
     ]
     average_unoccupied = [
+<<<<<<< HEAD
         sum(x) / num_simulations
         for x in zip(*results_unoccupied["simulation_outcomes"])
+=======
+        sum(x) / num_simulations for x in zip(*results_unoccupied["simulation_outcomes"])
+>>>>>>> c6f6cc3 (resolved conflicts)
     ]
 
     iterations = range(len(average_unoccupied))
