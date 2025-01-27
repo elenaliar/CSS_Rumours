@@ -414,33 +414,7 @@ class Grid:
         ax.add_patch(square)
         plt.axis("off")
 
-    def show_grid(self, iteration=None):
-        """
-        Displays the current state of the grid using `matplotlib`.
-
-        Each cell's status is represented by an integer value corresponding to its status in the `Status` enum.
-        A color map is used to visualize the different statuses of the cells.
-
-        Parameters:
-            iteration (int, optional): The current iteration number, used for titles. Defaults to None.
-        """
-        grid = [[cell.get_status().value for cell in row] for row in self.lecture_hall]
-
-        colors = [
-            Colors.UNOCCUPIED.value,
-            Colors.CLUELESS.value,
-            Colors.SECRET_KEEPER.value,
-            Colors.GOSSIP_SPREADER.value,
-        ]
-        cmap = ListedColormap(colors)
-
-        plt.imshow(grid, cmap=cmap, interpolation="none")
-
-        # Add a square specifying the central area and an outer border
-        self.add_central_square()
-        self.add_outer_box()
-
-        # Add legend to the plot
+    def add_legend(self, colors):
         legend_patches = [
             Patch(
                 facecolor=color, edgecolor="black", label=f"{state}"
@@ -455,6 +429,34 @@ class Grid:
             loc="upper right",
             bbox_to_anchor=(1.33, 1),
         )
+
+    def show_grid(self, iteration=None):
+        """
+        Displays the current state of the grid using `matplotlib`.
+
+        Each cell's status is represented by an integer value corresponding to its status in the `Status` enum.
+        A color map is used to visualize the different statuses of the cells.
+
+        Parameters:
+            iteration (int, optional): The current iteration number, used for titles. Defaults to None.
+        """
+        grid = [[cell.get_status().value for cell in row] for row in self.lecture_hall]
+
+        # Define colormap
+        colors = [
+            Colors.UNOCCUPIED.value,
+            Colors.CLUELESS.value,
+            Colors.SECRET_KEEPER.value,
+            Colors.GOSSIP_SPREADER.value,
+        ]
+        cmap = ListedColormap(colors)
+
+        plt.imshow(grid, cmap=cmap, interpolation="none")
+
+        # Add a square specifying the central area, an outer border and legend
+        self.add_central_square()
+        self.add_outer_box()
+        self.add_legend(colors)
 
         if iteration is not None:
             plt.title(f"Iteration {iteration}")
@@ -474,14 +476,22 @@ class Grid:
         """
         grid = [[cell.get_status().value for cell in row] for row in self.lecture_hall]
 
-        center_start, center_end = self.size // 4, 3 * self.size // 4
-        for i in range(center_start, center_end):
-            for j in range(center_start, center_end):
-                if grid[i][j] != Status.UNOCCUPIED.value:
-                    grid[i][j] += 0.5
+        # Define colormap
+        colors = [
+            Colors.UNOCCUPIED.value,
+            Colors.CLUELESS.value,
+            Colors.SECRET_KEEPER.value,
+            Colors.GOSSIP_SPREADER.value,
+        ]
+        cmap = ListedColormap(colors)
 
-        plt.imshow(grid, cmap="coolwarm", interpolation="none")
-        plt.colorbar(label="Status")
+        plt.imshow(grid, cmap=cmap, interpolation="none")
+
+        # Add a square specifying the central area, an outer border and legend
+        self.add_central_square()
+        self.add_outer_box()
+        self.add_legend(colors)
+
         if iteration is not None:
             plt.title(f"Iteration {iteration}")
         if save_path:
@@ -503,7 +513,7 @@ class Grid:
 
         frames = []
 
-        for step in range(steps):
+        for step in range(steps + 1):
             fig_path = os.path.join(images_dir, f"frame_{step}.png")
             self.save_grid(iteration=step, save_path=fig_path)
             frames.append(fig_path)

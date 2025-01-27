@@ -37,7 +37,6 @@ def show_lecture_hall_over_time(
     ]
 
     fig = plt.figure()
-    # colors = ["lightgray", "white", "gold", "goldenrod"]
     colors = [
         Colors.UNOCCUPIED.value,
         Colors.CLUELESS.value,
