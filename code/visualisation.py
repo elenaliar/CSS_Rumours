@@ -2,8 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from IPython.display import HTML
 from matplotlib import animation
-from matplotlib.colors import ListedColormap
-from matplotlib.patches import Patch, Rectangle
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from tqdm import tqdm
 from simulation import (
     run_multiple_simulations_for_timeplot_status,
@@ -14,7 +13,17 @@ from simulation import (
     run_multiple_simulations_same_initial_conditions,
     run_simulation,
 )
-from ca_lecture_hall_model import Grid
+from ca_lecture_hall_model import Colors, Grid
+
+
+def get_pink_colormap(N):
+    pink_colormap = LinearSegmentedColormap.from_list(
+        "pink_shades",
+        [Colors.DARK_PINK.value, Colors.LIGHT_PINK.value],
+        N=N,  # Dark pink to light pink
+    )
+
+    return pink_colormap
 
 
 def show_lecture_hall_over_time(
@@ -37,38 +46,20 @@ def show_lecture_hall_over_time(
     ]
 
     fig = plt.figure()
-    colors = ["lightgray", "white", "gold", "goldenrod"]
+    colors = [
+        Colors.UNOCCUPIED.value,
+        Colors.CLUELESS.value,
+        Colors.SECRET_KEEPER.value,
+        Colors.GOSSIP_SPREADER.value,
+    ]
     cmap = ListedColormap(colors)
 
     im = plt.imshow(init_grid, cmap=cmap, interpolation="none", animated=True)
 
-    # Add a square specifying the central 10x10 area
-    ax = plt.gca()
-    left_corner_coordinate = (len(init_grid[0]) // 4) - 0.5
-    square = Rectangle(
-        (left_corner_coordinate, left_corner_coordinate),
-        len(init_grid[0]) // 2 + 1,
-        len(init_grid[0]) // 2 + 1,
-        edgecolor="dimgray",
-        facecolor="none",
-        linewidth=2,
-    )
-    ax.add_patch(square)
-
-    # Add legend to the plot
-    legend_patches = [
-        Patch(
-            facecolor=color, edgecolor="black", label=f"State {i}"
-        )  # TODO: use the names of states instead of numbers
-        for i, color in enumerate(colors)
-    ]
-
-    plt.legend(
-        handles=legend_patches,
-        title="States",
-        loc="upper right",
-        bbox_to_anchor=(1.2, 1),
-    )
+    # Add a square specifying the central area, an outer border and legend
+    cell_grids[0].add_central_square()
+    cell_grids[0].add_outer_box()
+    cell_grids[0].add_legend(colors)
 
     # Get the state number for each cell
     grids = [
@@ -76,21 +67,17 @@ def show_lecture_hall_over_time(
         for cell_grid in cell_grids
     ]
 
-    # animation function. This is called sequentially
+    # Animation function, called sequentally
     def animate(i):
         im.set_array(grids[i])
         return (im,)
 
-    # call the animator.  blit=True means only re-draw the parts that have changed.
+    # Call the animator
     anim = animation.FuncAnimation(
         fig, animate, frames=len(grids), interval=200, blit=True
     )
 
-    # save the animation as an mp4.  This requires ffmpeg or mencoder to be
-    # installed.  The extra_args ensure that the x264 codec is used, so that
-    # the video can be embedded in html5.  You may need to adjust this for
-    # your system: for more information, see
-    # http://matplotlib.sourceforge.net/api/animation_api.html
+    # Save the animation as an mp4
     if save_animation:
         anim.save(animation_name, fps=30, extra_args=["-vcodec", "libx264"])
 
@@ -270,7 +257,11 @@ def simulate_and_plot_gossip_model_all_combinations(
 
 
 def plot_percolation_results(
-    densities, percolations, spread_threshold=None, label=None
+    densities,
+    percolations,
+    spread_threshold=None,
+    label=None,
+    color=Colors.DARK_PINK.value,
 ):
     """
     Plots percolation results for different densities or spread thresholds.
@@ -281,11 +272,7 @@ def plot_percolation_results(
         else "Percolation"
     )
     plt.plot(
-        densities,
-        percolations,
-        marker="o",
-        linestyle="-",
-        label=label,
+        densities, percolations, marker="o", linestyle="-", label=label, color=color
     )
 
 
@@ -389,13 +376,24 @@ def plot_percolation_vs_density_vs_spread_threshold(
 
     plt.figure(figsize=(10, 8))
 
+    # Get the custom colormap
+    pink_colormap = get_pink_colormap(len(spread_thresholds))
+
+    colors = [pink_colormap(i) for i in range(len(spread_thresholds))]
+
     print("Starting simulation for different spread thresholds and densities...")
 
-    for spread_threshold in tqdm(spread_thresholds, desc="Simulating thresholds"):
+    for i, spread_threshold in tqdm(
+        enumerate(spread_thresholds),
+        desc="Simulating thresholds",
+        total=len(spread_thresholds),
+    ):
         percolations = simulate_and_collect_percolations(
             grid_size, densities, spread_threshold, steps, num_simulations, flag_center, flag_neighbors
         )
-        plot_percolation_results(densities, percolations, spread_threshold)
+        plot_percolation_results(
+            densities, percolations, spread_threshold, color=colors[i]
+        )
 
     print("Simulations completed.")
 
@@ -435,10 +433,11 @@ def plot_3d_percolation_vs_density_and_threshold(
     thresholds, densities = np.meshgrid(thresholds, densities)
     percolations = np.array(percolation_data)
 
+    pink_colormap = get_pink_colormap(len(thresholds))
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection="3d")
     surf = ax.plot_surface(
-        thresholds, densities, percolations, cmap="viridis", edgecolor="none"
+        thresholds, densities, percolations, cmap="pink_colormap", edgecolor="none"
     )
 
     ax.set_ylabel("Density")
@@ -472,12 +471,7 @@ def plot_3d_gossip_spreader_counts(
         desc="Spread Thresholds",
         total=len(spread_thresholds),
     ):
-        for j, density in tqdm(
-            enumerate(densities),
-            desc=f"Densities (Threshold {spread_threshold:.2f})",
-            total=len(densities),
-            leave=False,
-        ):
+        for j, density in enumerate(densities):
             results = run_multiple_simulations_for_phase_diagram(
                 grid_size,
                 density,
@@ -493,11 +487,12 @@ def plot_3d_gossip_spreader_counts(
             spreader_counts[j, i] = average_spreaders  # used for Z
 
     # 3D plot
+    pink_colormap = get_pink_colormap(len(spread_thresholds))
     X, Y = np.meshgrid(spread_thresholds, densities)
     Z = spreader_counts
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(projection="3d")
-    surface = ax.plot_surface(X, Y, Z, cmap="coolwarm")
+    surface = ax.plot_surface(X, Y, Z, cmap=pink_colormap)
     ax.set_xlabel("Spreading Threshold")
     ax.set_ylabel("Density")
     ax.set_zlabel("Average Amount of Gossip Spreaders")
@@ -506,7 +501,6 @@ def plot_3d_gossip_spreader_counts(
     )
     fig.colorbar(surface, ax=ax, shrink=0.6, aspect=10)
     plt.show()
-
 
 
 def plot_time_status(ax, grid_size, density, spread_threshold, steps, num_simulations, flag_center, x_limits, y_limits, flag_neighbors=1):
@@ -547,10 +541,10 @@ def plot_time_status(ax, grid_size, density, spread_threshold, steps, num_simula
 
     iterations = range(len(average_unoccupied))
 
-    ax.plot(iterations, average_unoccupied, label="UNOCCUPIED")
-    ax.plot(iterations, average_clueless, label="CLUELESS")
-    ax.plot(iterations, average_secret, label="SECRET_KEEPER")
-    ax.plot(iterations, average_gossip, label="GOSSIP_SPREADER")
+    ax.plot(iterations, average_unoccupied, label="UNOCCUPIED", color=Colors.UNOCCUPIED.value)
+    ax.plot(iterations, average_clueless, label="CLUELESS", color=Colors.CLUELESS_DARK.value)
+    ax.plot(iterations, average_secret, label="SECRET_KEEPER", color=Colors.SECRET_KEEPER.value)
+    ax.plot(iterations, average_gossip, label="GOSSIP_SPREADER", color=Colors.SECRET_KEEPER.value)
     ax.set_title(f"Density: {density}, Spread: {spread_threshold}, Flag: {flag_center}")
     ax.set_xlabel("Time Steps", fontsize=14)
     ax.set_ylabel("Number of Cells", fontsize=14)
