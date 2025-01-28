@@ -454,64 +454,50 @@ def plot_3d_gossip_spreader_counts(grid_size, steps=1000, num_simulations=100, f
     plt.show()
 
 
-def plot_time_status(results_gossip, results_secret, results_clueless, results_unoccupied, num_simulations):
+def plot_time_status(ax, grid_size, density, spread_threshold, steps, num_simulations, flag_center, x_limits, y_limits):
     """
     Plots the counts of each status over time (iterations)..
 
     Parameters:
-        
-        results_gossip (dict): A dictionary containing the amount of the gossip spreaders across simulations.
-        results_secret (dict): A dictionary containing the amount of the secret keepers across simulations.
-        results_clueless (dict): A dictionary containing the amount of the clueless students across simulations.
-        results_unoccupied (dict): A dictionary containing the amount of the unoccupied cells across simulations.
-        num_simulations (int): The number of simulations that were run for each density.
-    """ 
+        grid_size (int): The size of the grid.
+        steps (int): The number of time steps (iterations) for each simulation.
+        num_simulations (int): The number of simulations to run.
+        density (float): The density of the grid.
+        spread_threshold (float): The spreading threshold for the gossip model.
+        flag_center (int): Flag to determine the position of initial spreader
+        x_limits (tuple): Limits for the x-axis (time).
+        y_limits (tuple): Limits for the y-axis (number of cells).
+    """
+    results_gossip, results_secret, results_clueless, results_unoccupied = (
+        run_multiple_simulations_for_timeplot_status(
+            grid_size, density, spread_threshold, steps, num_simulations, flag_center
+        )
+    )
+
+    # average results over simulations
+    average_gossip = [
+        sum(x) / num_simulations for x in zip(*results_gossip["simulation_outcomes"])
+    ]
+    average_secret = [
+        sum(x) / num_simulations for x in zip(*results_secret["simulation_outcomes"])
+    ]
+    average_clueless = [
+        sum(x) / num_simulations for x in zip(*results_clueless["simulation_outcomes"])
+    ]
+    average_unoccupied = [
+        sum(x) / num_simulations
+        for x in zip(*results_unoccupied["simulation_outcomes"])
+    ]
     
-    # Find the maximum length of the arrays
-    max_length = max(len(arr) for arr in results_gossip["simulation_outcomes"])
-
-    # Initialize a list to store the averages
-    average_gossip = []
-    average_secret = []
-    average_clueless = []
-    average_unoccupied = []
-
-    # Iterate through each time step up to the max length
-    for i in range(max_length):
-        # Collect all values at the current time step
-        values_gossip = [
-            arr[i] if i < len(arr) else arr[-1]
-            for arr in results_gossip["simulation_outcomes"]
-        ]
-        values_secret = [
-            arr[i] if i < len(arr) else arr[-1]
-            for arr in results_secret["simulation_outcomes"]
-        ]
-        values_clueless = [
-            arr[i] if i < len(arr) else arr[-1]
-            for arr in results_clueless["simulation_outcomes"]
-        ]
-        values_unoccupied = [
-            arr[i] if i < len(arr) else arr[-1]
-            for arr in results_unoccupied["simulation_outcomes"]
-        ]
-
-        # Calculate the average and add it to the list
-        average_gossip.append(sum(values_gossip) / num_simulations)
-        average_secret.append(sum(values_secret) / num_simulations)
-        average_clueless.append(sum(values_clueless) / num_simulations)
-        average_unoccupied.append(sum(values_unoccupied) / num_simulations)
     iterations = range(len(average_unoccupied))
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(iterations, average_unoccupied, label="UNOCCUPIED")
-    plt.plot(iterations, average_clueless, label="CLUELESS")
-    plt.plot(iterations, average_secret, label="SECRET_KEEPER")
-    plt.plot(iterations, average_gossip, label="GOSSIP_SPREADER")
-    plt.xlabel("Time Steps")
-    plt.ylabel("Number of Cells")
-    plt.title("Status Counts Over Time")
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
+    ax.plot(iterations, average_unoccupied, label="UNOCCUPIED")
+    ax.plot(iterations, average_clueless, label="CLUELESS")
+    ax.plot(iterations, average_secret, label="SECRET_KEEPER")
+    ax.plot(iterations, average_gossip, label="GOSSIP_SPREADER")
+    ax.set_title(f"Density: {density}, Spread: {spread_threshold}, Flag: {flag_center}")
+    ax.set_xlabel("Time Steps", fontsize=14)
+    ax.set_ylabel("Number of Cells", fontsize=14)
+    ax.set_xlim(x_limits)
+    ax.set_ylim(y_limits)
+    ax.grid(True)

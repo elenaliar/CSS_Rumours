@@ -430,9 +430,7 @@ def run_multiple_simulations_for_timeplot_status(
     results_gossip = create_results_dict(grid_size, density, spread_threshold, steps)
     results_secret = create_results_dict(grid_size, density, spread_threshold, steps)
     results_clueless = create_results_dict(grid_size, density, spread_threshold, steps)
-    results_unoccupied = create_results_dict(
-        grid_size, density, spread_threshold, steps
-    )
+    results_unoccupied = create_results_dict(grid_size, density, spread_threshold, steps)
 
     for i in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
@@ -441,14 +439,27 @@ def run_multiple_simulations_for_timeplot_status(
         grids = run_simulation(g, steps)
 
         status_counts = count_statuses(grids)
+        actual_steps = len(status_counts["GOSSIP_SPREADER"])
 
         gossip_spreaders = status_counts["GOSSIP_SPREADER"]
-        results_gossip["simulation_outcomes"].append(gossip_spreaders)
         secret_keepers = status_counts["SECRET_KEEPER"]
-        results_secret["simulation_outcomes"].append(secret_keepers)
         clueless = status_counts["CLUELESS"]
-        results_clueless["simulation_outcomes"].append(clueless)
         unoccupied = status_counts["UNOCCUPIED"]
+
+        if actual_steps < steps:
+            last_gossip = gossip_spreaders[-1]
+            last_secret = secret_keepers[-1]
+            last_clueless = clueless[-1]
+            last_unoccupied = unoccupied[-1]
+
+            gossip_spreaders.extend([last_gossip] * (steps - actual_steps))
+            secret_keepers.extend([last_secret] * (steps - actual_steps))
+            clueless.extend([last_clueless] * (steps - actual_steps))
+            unoccupied.extend([last_unoccupied] * (steps - actual_steps))
+
+        results_gossip["simulation_outcomes"].append(gossip_spreaders)
+        results_secret["simulation_outcomes"].append(secret_keepers)
+        results_clueless["simulation_outcomes"].append(clueless)
         results_unoccupied["simulation_outcomes"].append(unoccupied)
 
     return results_gossip, results_secret, results_clueless, results_unoccupied
