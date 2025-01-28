@@ -347,7 +347,7 @@ class Grid:
 
         return neighbours
 
-    def update_grid(self):
+    def update_grid(self, flag_neighbors=1):
         """
         Updates the grid by iterating through each cell and changing their status based on neighboring gossip spreaders.
 
@@ -357,6 +357,8 @@ class Grid:
 
         The grid is updated by making a deep copy of the current state, ensuring that changes do not affect the current iteration and all
         cells are changed at the same time.
+        paremeters:
+            flag_neighbors (int): The flag to determine the type of neighbors to include. If 1, implement Moore neighborhood, if 0, implement Von Neumann neighborhood
         """
         new_lecture_hall = copy.deepcopy(self.lecture_hall)
 
@@ -370,7 +372,7 @@ class Grid:
                     continue
 
                 # Get neighbours and check if at least one of them is a gossip_spreader
-                neighbours = self.get_neighbours(i, j)
+                neighbours = self.get_neighbours(i, j, flag_neighbors)
 
                 neighbour_statuses = [
                     neighbour.is_gossip_spreader() for neighbour in neighbours

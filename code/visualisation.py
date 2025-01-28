@@ -195,7 +195,7 @@ def simulate_and_plot_gossip_model_all_combinations(
 ):
     """
     Runs multiple simulations for all combinations of densities and spread thresholds,
-    aggregates the results, and plots the log-log distributions.
+    aggregates the results, plots the log-log distributions and the counts of each status over time (iterations).
 
     Parameters:
         simulation_function (function): A function that runs the gossip model simulation and returns a cluster size distribution.
@@ -213,12 +213,18 @@ def simulate_and_plot_gossip_model_all_combinations(
     for density in densities:
         for spread_threshold in spread_thresholds:
             print(
-                f"Running simulations for Density={density}, Spread Threshold={spread_threshold}..."
+                f"Running simulations for Density={density}, Spread Threshold={spread_threshold}, Grid={grid_size}x{grid_size}"
             )
 
             # Run multiple simulations for this parameter set
             cluster_distributions = []
-            cluster_distribution = run_multiple_simulations_same_initial_conditions(
+            (
+                cluster_distribution,
+                results_gossip,
+                results_secret,
+                results_clueless,
+                results_unoccupied,
+            ) = run_multiple_simulations_same_initial_conditions(
                 num_simulations,
                 grid_size,
                 density,
@@ -226,6 +232,14 @@ def simulate_and_plot_gossip_model_all_combinations(
                 flag_center=flag_center,
             )
             cluster_distributions.append(cluster_distribution)
+
+            plot_time_status(
+                results_gossip,
+                results_secret,
+                results_clueless,
+                results_unoccupied,
+                num_simulations,
+            )
 
             # Aggregate the cluster size distributions
             aggregated_distribution = aggregate_cluster_distributions(
@@ -344,7 +358,7 @@ def plot_percolation_vs_spread_threshold(
 
 
 def plot_percolation_vs_density_vs_spread_threshold(
-    grid_size, steps=1000, num_simulations=100
+    grid_size, steps=1000, num_simulations=100, flag_center=1, flag_neighbors=1
 ):
     """
     Runs multiple simulations for 20 different densities and 10 different spreading thresholds,
@@ -354,6 +368,8 @@ def plot_percolation_vs_density_vs_spread_threshold(
         grid_size (int): The size of the grid for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+        flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
+        flag_neighbors (int, optional): The flag to determine the neighborhood type. If 1, use the Moore neighborhood. If 0, use the Von Neumann neighborhood.
     """
     spread_thresholds = np.linspace(0, 1, 10)
     densities = np.linspace(0, 1, 20)
@@ -373,7 +389,7 @@ def plot_percolation_vs_density_vs_spread_threshold(
         total=len(spread_thresholds),
     ):
         percolations = simulate_and_collect_percolations(
-            grid_size, densities, spread_threshold, steps, num_simulations
+            grid_size, densities, spread_threshold, steps, num_simulations, flag_center, flag_neighbors
         )
         plot_percolation_results(
             densities, percolations, spread_threshold, color=colors[i]
@@ -390,7 +406,7 @@ def plot_percolation_vs_density_vs_spread_threshold(
 
 
 def plot_3d_percolation_vs_density_and_threshold(
-    grid_size, steps=1000, num_simulations=100
+    grid_size, steps=1000, num_simulations=100, flag_center=1
 ):
     """
     Plots the percolation probability against density and spreading threshold as a 3D plot.
@@ -399,6 +415,7 @@ def plot_3d_percolation_vs_density_and_threshold(
         grid_size (int): The size of the grid for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+        flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
     """
     densities = np.linspace(0, 1, 10)
     thresholds = np.linspace(0, 1, 10)
@@ -408,23 +425,23 @@ def plot_3d_percolation_vs_density_and_threshold(
     for threshold in tqdm(thresholds, desc="Simulating thresholds"):
         # Use the simulate_and_collect_percolations function for densities
         percolations = simulate_and_collect_percolations(
-            grid_size, densities, threshold, steps, num_simulations
+            grid_size, densities, threshold, steps, num_simulations, flag_center
         )
         percolation_data.append(percolations)
 
     # Convert data to arrays for plotting
-    densities, thresholds = np.meshgrid(densities, thresholds)
+    thresholds, densities = np.meshgrid(thresholds, densities)
     percolations = np.array(percolation_data)
 
     pink_colormap = get_pink_colormap(len(thresholds))
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection="3d")
     surf = ax.plot_surface(
-        densities, thresholds, percolations, cmap=pink_colormap, edgecolor="none"
+        thresholds, densities, percolations, cmap="pink_colormap", edgecolor="none"
     )
 
-    ax.set_xlabel("Density")
-    ax.set_ylabel("Spread Threshold")
+    ax.set_ylabel("Density")
+    ax.set_xlabel("Spread Threshold")
     ax.set_zlabel("Percolation Probability")
     ax.set_title("3D Plot of Percolation vs Density and Spread Threshold")
 
@@ -432,7 +449,9 @@ def plot_3d_percolation_vs_density_and_threshold(
     plt.show()
 
 
-def plot_3d_gossip_spreader_counts(grid_size, steps=1000, num_simulations=100):
+def plot_3d_gossip_spreader_counts(
+    grid_size, steps=1000, num_simulations=100, flag_center=1
+):
     """
     Plots the count of the GOSSIP_SPREADERS against density and spreading threshold as a 3D plot.
 
@@ -454,7 +473,12 @@ def plot_3d_gossip_spreader_counts(grid_size, steps=1000, num_simulations=100):
     ):
         for j, density in enumerate(densities):
             results = run_multiple_simulations_for_phase_diagram(
-                grid_size, density, spread_threshold, steps, num_simulations
+                grid_size,
+                density,
+                spread_threshold,
+                steps,
+                num_simulations,
+                flag_center,
             )
 
             # average number of GOSSIP_SPREADERS across simulations
@@ -479,9 +503,7 @@ def plot_3d_gossip_spreader_counts(grid_size, steps=1000, num_simulations=100):
     plt.show()
 
 
-def plot_time_status(
-    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
-):
+def plot_time_status(ax, grid_size, density, spread_threshold, steps, num_simulations, flag_center, x_limits, y_limits, flag_neighbors=1):
     """
     Plots the counts of each status over time (iterations)..
 
@@ -492,10 +514,13 @@ def plot_time_status(
         density (float): The density of the grid.
         spread_threshold (float): The spreading threshold for the gossip model.
         flag_center (int): Flag to determine the position of initial spreader
+        x_limits (tuple): Limits for the x-axis (time).
+        y_limits (tuple): Limits for the y-axis (number of cells).
+        flag_neighbors (int): Flag to determine the neighborhood type. If 1, use the Moore neighborhood. If 0, use the Von Neumann neighborhood.
     """
     results_gossip, results_secret, results_clueless, results_unoccupied = (
         run_multiple_simulations_for_timeplot_status(
-            grid_size, density, spread_threshold, steps, num_simulations, flag_center
+            grid_size, density, spread_threshold, steps, num_simulations, flag_center, flag_neighbors
         )
     )
 
@@ -516,32 +541,13 @@ def plot_time_status(
 
     iterations = range(len(average_unoccupied))
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(
-        iterations,
-        average_unoccupied,
-        label="UNOCCUPIED",
-        color=Colors.UNOCCUPIED.value,
-    )
-    plt.plot(
-        iterations, average_clueless, label="CLUELESS", color=Colors.CLUELESS_DARK.value
-    )
-    plt.plot(
-        iterations,
-        average_secret,
-        label="SECRET KEEPER",
-        color=Colors.SECRET_KEEPER.value,
-    )
-    plt.plot(
-        iterations,
-        average_gossip,
-        label="GOSSIP SPREADER",
-        color=Colors.GOSSIP_SPREADER.value,
-    )
-    plt.xlabel("Time Steps")
-    plt.ylabel("Number of Cells")
-    plt.title("Status Counts Over Time")
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
+    ax.plot(iterations, average_unoccupied, label="UNOCCUPIED", color=Colors.UNOCCUPIED.value)
+    ax.plot(iterations, average_clueless, label="CLUELESS", color=Colors.CLUELESS_DARK.value)
+    ax.plot(iterations, average_secret, label="SECRET_KEEPER", color=Colors.SECRET_KEEPER.value)
+    ax.plot(iterations, average_gossip, label="GOSSIP_SPREADER", color=Colors.SECRET_KEEPER.value)
+    ax.set_title(f"Density: {density}, Spread: {spread_threshold}, Flag: {flag_center}")
+    ax.set_xlabel("Time Steps", fontsize=14)
+    ax.set_ylabel("Number of Cells", fontsize=14)
+    ax.set_xlim(x_limits)
+    ax.set_ylim(y_limits)
+    ax.grid(True)
