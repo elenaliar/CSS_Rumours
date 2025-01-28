@@ -431,13 +431,13 @@ def plot_3d_percolation_vs_density_and_threshold(
 
     # Convert data to arrays for plotting
     thresholds, densities = np.meshgrid(thresholds, densities)
-    percolations = np.array(percolation_data)
+    percolations = np.transpose(np.array(percolation_data))
 
     pink_colormap = get_pink_colormap(len(thresholds))
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection="3d")
     surf = ax.plot_surface(
-        thresholds, densities, percolations, cmap="pink_colormap", edgecolor="none"
+        thresholds, densities, percolations, cmap=pink_colormap, edgecolor="none"
     )
 
     ax.set_ylabel("Density")
