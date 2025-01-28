@@ -214,15 +214,15 @@ class Grid:
         else:
             # Set the spreader outside the central subgrid
             # Randomly choose a row/column outside of the central block
-            initial_spreader_i = random.choice([0, self.size - 1])
-            initial_spreader_j = random.choice([0, self.size - 1])
+            initial_spreader_i = random.randint(0, self.size - 1)
+            initial_spreader_j = random.randint(0, self.size - 1)
 
             # Ensure the spreader is outside the 10x10 region
             while (self.size // 4 <= initial_spreader_i < 3 * (self.size // 4)) and (
                 self.size // 4 <= initial_spreader_j < 3 * (self.size // 4)
             ):
-                initial_spreader_i = random.choice([0, self.size - 1])
-                initial_spreader_j = random.choice([0, self.size - 1])
+                initial_spreader_i = random.randint(0, self.size - 1)
+                initial_spreader_j = random.randint(0, self.size - 1)
 
         self.lecture_hall[initial_spreader_i][initial_spreader_j].set_status(
             Status.GOSSIP_SPREADER

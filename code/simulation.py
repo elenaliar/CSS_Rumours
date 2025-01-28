@@ -203,8 +203,8 @@ def run_multiple_simulations_same_initial_conditions(
     num_simulations, grid_size, density, spread_threshold, steps=100, flag_center=1
 ):
     """
-    Runs multiple simulations with the same initial conditions (same grid size, density, and spreading threshold)
-    and calculates the cluster size distribution for each simulation.
+    Runs multiple simulations with the same initial conditions (same grid size, density, and spreading threshold), 
+    calculates the cluster size distribution for each simulation and records the number of cells in each status over time.
 
     Parameters:
         num_simulations (int): The number of simulations to run.
@@ -215,10 +215,21 @@ def run_multiple_simulations_same_initial_conditions(
         flag_center (int): The flag to determine the initial spreader placement.
 
     Returns:
-        list of dict: A list of cluster size distributions (one for each simulation).
+        tuple: A tuple containing four dictionaries, each representing the outcomes for a specific status:
+            results_gossip (dictionary)
+            results_secret (dictionary)
+            results_clueless (dictionary)
+            results_unoccupied (dictionary)
+            list of dict: A list of cluster size distributions (one for each simulation).
     """
     cluster_distributions = []
     count_percolation = 0
+
+    results_gossip = create_results_dict(grid_size, density, spread_threshold, steps)
+    results_secret = create_results_dict(grid_size, density, spread_threshold, steps)
+    results_clueless = create_results_dict(grid_size, density, spread_threshold, steps)
+    results_unoccupied = create_results_dict(grid_size, density, spread_threshold, steps)
+
 
     # run multiple simulations
     for _ in range(num_simulations):
@@ -227,7 +238,19 @@ def run_multiple_simulations_same_initial_conditions(
         grid.initialize_board(flag_center)
 
         # run the simulation
-        run_simulation(grid, steps=steps)
+        grids = run_simulation(grid, steps=steps)
+
+        status_counts = count_statuses(grids)
+        gossip_spreaders = status_counts["GOSSIP_SPREADER"]
+        results_gossip["simulation_outcomes"].append(gossip_spreaders)
+        secret_keepers = status_counts["SECRET_KEEPER"]
+        results_secret["simulation_outcomes"].append(secret_keepers)
+        clueless = status_counts["CLUELESS"]
+        results_clueless["simulation_outcomes"].append(clueless)
+        unoccupied = status_counts["UNOCCUPIED"]
+        results_unoccupied["simulation_outcomes"].append(unoccupied)
+
+
         if grid.check_percolation():
             count_percolation += 1
         # calculate the cluster size distribution for the current grid
@@ -238,7 +261,7 @@ def run_multiple_simulations_same_initial_conditions(
         f"Percolation occured in {count_percolation} out of {num_simulations} simulations for density={density}, spread_threshold={spread_threshold}"
     )
     # return the list of cluster distributions from all simulations
-    return cluster_distributions
+    return cluster_distributions, results_gossip, results_secret, results_clueless, results_unoccupied
 
 
 def aggregate_cluster_distributions(cluster_distributions):
@@ -272,17 +295,17 @@ def aggregate_cluster_distributions(cluster_distributions):
     return aggregated_distribution
 
 
-def simulate_density(grid_size, density, spread_threshold, steps, num_simulations):
+def simulate_density(grid_size, density, spread_threshold, steps, num_simulations, flag_center=1):
     """
     Simulates a single density and spread threshold and returns the fraction of simulations with percolation.
     """
     results = run_multiple_simulations_for_percolation(
-        grid_size, density, spread_threshold, steps, num_simulations
+        grid_size, density, spread_threshold, steps, num_simulations, flag_center
     )
     return sum(results["simulation_outcomes"]) / num_simulations
 
 
-def simulate_density_vs_threshold(grid_size, density, steps, num_simulations):
+def simulate_density_vs_threshold(grid_size, density, steps, num_simulations, flag_center=1):
     """
     Simulates different spread thresholds for a fixed density and returns percolation probabilities.
     """
@@ -291,14 +314,14 @@ def simulate_density_vs_threshold(grid_size, density, steps, num_simulations):
 
     for threshold in tqdm(thresholds, desc="Simulating thresholds"):
         percolations.append(
-            simulate_density(grid_size, density, threshold, steps, num_simulations)
+            simulate_density(grid_size, density, threshold, steps, num_simulations, flag_center)
         )
 
     return thresholds, percolations
 
 
 def simulate_and_collect_percolations(
-    grid_size, densities, spread_threshold, steps, num_simulations
+    grid_size, densities, spread_threshold, steps, num_simulations, flag_center=1
 ):
     """
     Simulates percolation probabilities across a range of densities for a fixed spread threshold.
@@ -306,7 +329,7 @@ def simulate_and_collect_percolations(
     percolations = []
     for d in densities:
         percolations.append(
-            simulate_density(grid_size, d, spread_threshold, steps, num_simulations)
+            simulate_density(grid_size, d, spread_threshold, steps, num_simulations, flag_center)
         )
     return percolations
 
