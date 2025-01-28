@@ -16,6 +16,16 @@ from simulation import (
 from ca_lecture_hall_model import Colors, Grid
 
 
+def get_pink_colormap(N):
+    pink_colormap = LinearSegmentedColormap.from_list(
+        "pink_shades",
+        [Colors.DARK_PINK.value, Colors.LIGHT_PINK.value],
+        N=N,  # Dark pink to light pink
+    )
+
+    return pink_colormap
+
+
 def show_lecture_hall_over_time(
     cell_grids, save_animation=False, animation_name="gossip_spread_simulation.mp4"
 ):
@@ -346,17 +356,12 @@ def plot_percolation_vs_density_vs_spread_threshold(
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
     """
     spread_thresholds = np.linspace(0, 1, 10)
-    # densities = np.linspace(0, 1, 20)
-    densities = np.linspace(0, 1, 10)
+    densities = np.linspace(0, 1, 20)
 
     plt.figure(figsize=(10, 8))
 
-    # Define a custom pink colormap (from dark pink to light pink)
-    pink_colormap = LinearSegmentedColormap.from_list(
-        "pink_shades",
-        [Colors.DARK_PINK.value, Colors.LIGHT_PINK.value],
-        N=len(spread_thresholds),  # Dark pink to light pink
-    )
+    # Get the custom colormap
+    pink_colormap = get_pink_colormap(len(spread_thresholds))
 
     colors = [pink_colormap(i) for i in range(len(spread_thresholds))]
 
@@ -411,10 +416,11 @@ def plot_3d_percolation_vs_density_and_threshold(
     densities, thresholds = np.meshgrid(densities, thresholds)
     percolations = np.array(percolation_data)
 
+    pink_colormap = get_pink_colormap(len(thresholds))
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection="3d")
     surf = ax.plot_surface(
-        densities, thresholds, percolations, cmap="viridis", edgecolor="none"
+        densities, thresholds, percolations, cmap=pink_colormap, edgecolor="none"
     )
 
     ax.set_xlabel("Density")
@@ -446,12 +452,7 @@ def plot_3d_gossip_spreader_counts(grid_size, steps=1000, num_simulations=100):
         desc="Spread Thresholds",
         total=len(spread_thresholds),
     ):
-        for j, density in tqdm(
-            enumerate(densities),
-            desc=f"Densities (Threshold {spread_threshold:.2f})",
-            total=len(densities),
-            leave=False,
-        ):
+        for j, density in enumerate(densities):
             results = run_multiple_simulations_for_phase_diagram(
                 grid_size, density, spread_threshold, steps, num_simulations
             )
@@ -462,11 +463,12 @@ def plot_3d_gossip_spreader_counts(grid_size, steps=1000, num_simulations=100):
             spreader_counts[j, i] = average_spreaders  # used for Z
 
     # 3D plot
+    pink_colormap = get_pink_colormap(len(spread_thresholds))
     X, Y = np.meshgrid(spread_thresholds, densities)
     Z = spreader_counts
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(projection="3d")
-    surface = ax.plot_surface(X, Y, Z, cmap="coolwarm")
+    surface = ax.plot_surface(X, Y, Z, cmap=pink_colormap)
     ax.set_xlabel("Spreading Threshold")
     ax.set_ylabel("Density")
     ax.set_zlabel("Average Amount of Gossip Spreaders")
