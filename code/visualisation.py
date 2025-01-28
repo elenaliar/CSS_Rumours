@@ -325,7 +325,7 @@ def plot_percolation_vs_spread_threshold(
 
 
 def plot_percolation_vs_density_vs_spread_threshold(
-    grid_size, steps=1000, num_simulations=100, flag_center=1
+    grid_size, steps=1000, num_simulations=100, flag_center=1, flag_neighbors=1
 ):
     """
     Runs multiple simulations for 20 different densities and 10 different spreading thresholds,
@@ -336,6 +336,7 @@ def plot_percolation_vs_density_vs_spread_threshold(
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
         flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
+        flag_neighbors (int, optional): The flag to determine the neighborhood type. If 1, use the Moore neighborhood. If 0, use the Von Neumann neighborhood.
     """
     spread_thresholds = np.linspace(0, 1, 10)
     densities = np.linspace(0, 1, 20)
@@ -346,7 +347,7 @@ def plot_percolation_vs_density_vs_spread_threshold(
 
     for spread_threshold in tqdm(spread_thresholds, desc="Simulating thresholds"):
         percolations = simulate_and_collect_percolations(
-            grid_size, densities, spread_threshold, steps, num_simulations, flag_center
+            grid_size, densities, spread_threshold, steps, num_simulations, flag_center, flag_neighbors
         )
         plot_percolation_results(densities, percolations, spread_threshold)
 
@@ -454,7 +455,7 @@ def plot_3d_gossip_spreader_counts(grid_size, steps=1000, num_simulations=100, f
     plt.show()
 
 
-def plot_time_status(ax, grid_size, density, spread_threshold, steps, num_simulations, flag_center, x_limits, y_limits):
+def plot_time_status(ax, grid_size, density, spread_threshold, steps, num_simulations, flag_center, x_limits, y_limits, flag_neighbors=1):
     """
     Plots the counts of each status over time (iterations)..
 
@@ -467,10 +468,11 @@ def plot_time_status(ax, grid_size, density, spread_threshold, steps, num_simula
         flag_center (int): Flag to determine the position of initial spreader
         x_limits (tuple): Limits for the x-axis (time).
         y_limits (tuple): Limits for the y-axis (number of cells).
+        flag_neighbors (int): Flag to determine the neighborhood type. If 1, use the Moore neighborhood. If 0, use the Von Neumann neighborhood.
     """
     results_gossip, results_secret, results_clueless, results_unoccupied = (
         run_multiple_simulations_for_timeplot_status(
-            grid_size, density, spread_threshold, steps, num_simulations, flag_center
+            grid_size, density, spread_threshold, steps, num_simulations, flag_center, flag_neighbors
         )
     )
 
