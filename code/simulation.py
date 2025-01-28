@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 
 
-def run_simulation(grid, steps=1000):
+def run_simulation(grid, steps=1000, flag_neighbors=1):
     """
     Runs the simulation for a specified number of steps, updating the grid at each iteration.
     Stops simulation if no cell status changes anymore.
@@ -13,6 +13,7 @@ def run_simulation(grid, steps=1000):
     Parameters:
         grid (Grid): The initial grid to run the simulation on
         steps (int): The number of steps to simulate.
+        flag_neighborhood (int): The flag to determine the neighborhood type.If 1, the Moore neighborhood is used. If 0, the Von Neumann neighborhood is used.
 
     Returns:
         (list): A list of grids, one grid for each time step.
@@ -26,7 +27,7 @@ def run_simulation(grid, steps=1000):
 
     for step in range(steps):
         # update the grid
-        grid.update_grid()
+        grid.update_grid(flag_neighbors)
 
         current_grid = copy.deepcopy(grid.lecture_hall)
 
@@ -177,7 +178,7 @@ def calculate_cluster_size_distribution(grids):
 
 
 def run_multiple_simulations_for_percolation(
-    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
+    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1, flag_neighbors=1
 ):
     """
     Runs multiple simulations for a given density and spread threshold.
@@ -193,7 +194,7 @@ def run_multiple_simulations_for_percolation(
     for _ in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
         g.initialize_board(flag_center)
-        run_simulation(g, steps)
+        run_simulation(g, steps, flag_neighbors)
         results["simulation_outcomes"].append(g.check_percolation())
 
     return results
@@ -295,12 +296,12 @@ def aggregate_cluster_distributions(cluster_distributions):
     return aggregated_distribution
 
 
-def simulate_density(grid_size, density, spread_threshold, steps, num_simulations, flag_center=1):
+def simulate_density(grid_size, density, spread_threshold, steps, num_simulations, flag_center=1, flag_neighbors=1):
     """
     Simulates a single density and spread threshold and returns the fraction of simulations with percolation.
     """
     results = run_multiple_simulations_for_percolation(
-        grid_size, density, spread_threshold, steps, num_simulations, flag_center
+        grid_size, density, spread_threshold, steps, num_simulations, flag_center, flag_neighbors
     )
     return sum(results["simulation_outcomes"]) / num_simulations
 
@@ -321,7 +322,7 @@ def simulate_density_vs_threshold(grid_size, density, steps, num_simulations, fl
 
 
 def simulate_and_collect_percolations(
-    grid_size, densities, spread_threshold, steps, num_simulations, flag_center=1
+    grid_size, densities, spread_threshold, steps, num_simulations, flag_center=1, flag_neighbors=1
 ):
     """
     Simulates percolation probabilities across a range of densities for a fixed spread threshold.
@@ -329,7 +330,7 @@ def simulate_and_collect_percolations(
     percolations = []
     for d in densities:
         percolations.append(
-            simulate_density(grid_size, d, spread_threshold, steps, num_simulations, flag_center)
+            simulate_density(grid_size, d, spread_threshold, steps, num_simulations, flag_center, flag_neighbors)
         )
     return percolations
 
@@ -407,7 +408,7 @@ def create_results_dict(grid_size, density, spread_threshold, steps):
 
 
 def run_multiple_simulations_for_timeplot_status(
-    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1
+    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1, flag_neighbors=1
 ):
     """
     Runs multiple simulations of the grid model and records the number of cells in each status over time.
@@ -418,6 +419,8 @@ def run_multiple_simulations_for_timeplot_status(
         spread_threshold (float): The threshold probability for a cell to spread gossip.
         steps (int): The number of time steps (iterations) for each simulation.
         num_simulations (int): The number of simulations to run.
+        flag_center (int): The flag to determine the initial spreader placement.
+        flag_neighbors (int): The flag to determine the neighborhood type. If 1, the Moore neighborhood is used. If 0, the Von Neumann neighborhood is used.
 
     Returns:
         tuple: A tuple containing four dictionaries, each representing the outcomes for a specific status:
@@ -436,7 +439,7 @@ def run_multiple_simulations_for_timeplot_status(
         g = Grid(grid_size, density, spread_threshold)
         g.initialize_board(flag_center)
 
-        grids = run_simulation(g, steps)
+        grids = run_simulation(g, steps, flag_neighbors)
 
         status_counts = count_statuses(grids)
         actual_steps = len(status_counts["GOSSIP_SPREADER"])
