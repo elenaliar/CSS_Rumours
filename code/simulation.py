@@ -145,7 +145,7 @@ def run_multiple_simulations_for_percolation(
 
     for _ in range(num_simulations):
         g = Grid(grid_size, density, bond_probability)
-        g.initialize_board(flag_center)
+        g.initialize_board(flag_center, flag_neighbors)
         run_simulation(g, steps, flag_neighbors)
         results["simulation_outcomes"].append(g.check_percolation())
 
@@ -186,17 +186,11 @@ def run_multiple_simulations_same_initial_conditions(
     # run multiple simulations
     for _ in range(num_simulations):
         # create and initialize the grid
-        print("")
         grid = Grid(grid_size, density, bond_probability)
         grid.initialize_board(flag_center)
 
-        print("Grid initialised, going to run_simulation")
-        grid.show_grid()
-
         # run the simulation
         grids = run_simulation(grid, steps=steps)
-
-        print("run_simulation done, going to count_statuses")
 
         status_counts = count_statuses(grids)
         gossip_spreaders = status_counts["GOSSIP_SPREADER"]
@@ -206,14 +200,10 @@ def run_multiple_simulations_same_initial_conditions(
         unoccupied = status_counts["UNOCCUPIED"]
         results_unoccupied["simulation_outcomes"].append(unoccupied)
 
-        print("Finished getting statuses for a simulation")
-
         if grid.check_percolation():
             count_percolation += 1
         # calculate the cluster size distribution for the current grid
         cluster_distribution = calculate_cluster_size_distribution([grid])
-
-        print("Finished getting calculate_cluster_size_distribution")
 
         cluster_distributions.append(cluster_distribution)
 
@@ -312,22 +302,36 @@ def simulate_and_collect_percolations(
     """
     percolations = []
     for d in densities:
-        percolations.append(
-            simulate_density(
-                grid_size,
-                d,
-                bond_probability,
-                steps,
-                num_simulations,
-                flag_center,
-                flag_neighbors,
+        if 0.4 <= density <= 0.7:
+            percolations.append(
+                simulate_density(
+                    grid_size,
+                    d,
+                    bond_probability,
+                    steps,
+                    num_simulations * 2,
+                    flag_center,
+                    flag_neighbors,
+                )
             )
-        )
+        else:
+            percolations.append(
+                simulate_density(
+                    grid_size,
+                    d,
+                    bond_probability,
+                    steps,
+                    num_simulations,
+                    flag_center,
+                    flag_neighbors,
+                )
+            )
+            
     return percolations
 
 
 def run_multiple_simulations_for_phase_diagram(
-    grid_size, density, bond_probability, steps, num_simulations, flag_center=1
+    grid_size, density, bond_probability, steps, num_simulations, flag_center=1, flag_neighbors=0
 ):
     """
     Runs multiple simulations for a given density and spread threshold and for each simulation returns
@@ -358,9 +362,9 @@ def run_multiple_simulations_for_phase_diagram(
 
     for i in range(num_simulations):
         g = Grid(grid_size, density, bond_probability)
-        g.initialize_board(flag_center)
+        g.initialize_board(flag_center, flag_neighbors)
 
-        grids = run_simulation(g, steps)
+        grids = run_simulation(g, steps, flag_neighbors)
 
         status_counts = count_statuses(grids)
 

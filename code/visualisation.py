@@ -185,7 +185,7 @@ def aggregate_and_plot_cluster_distributions(
     plt.xlabel("Log10(Cluster Size)", fontsize=12)
     plt.ylabel("Log10(Frequency)", fontsize=12)
     plt.grid(True)
-    plt.legend()
+    # plt.legend()
     plt.show()
 
 
@@ -230,15 +230,14 @@ def simulate_and_plot_gossip_model_all_combinations(
                 flag_center=flag_center,
             )
 
-            print("Finished run_multiple_simulations_same_initial_conditions")
             cluster_distributions.append(cluster_distribution)
 
-            plot_time_status(
-                results_gossip,
-                results_clueless,
-                results_unoccupied,
-                num_simulations,
-            )
+            # plot_time_status(
+            #     results_gossip,
+            #     results_clueless,
+            #     results_unoccupied,
+            #     num_simulations,
+            # )
 
             # Aggregate the cluster size distributions
             aggregated_distribution = aggregate_cluster_distributions(
@@ -276,7 +275,7 @@ def plot_percolation_results(
 
 
 def plot_percolation_vs_density(
-    grid_size, bond_probability, steps=1000, num_simulations=100
+    grid_size, bond_probability, steps=1000, num_simulations=100, flag_center=1, flag_neighbors=0
 ):
     """
     Runs multiple simulations for 20 different densities and a given spread thresholds,
@@ -294,11 +293,18 @@ def plot_percolation_vs_density(
     print("Starting simulation for different densities...")
 
     for density in tqdm(densities, desc="Simulating densities"):
-        percolations.append(
-            simulate_density(
-                grid_size, density, bond_probability, steps, num_simulations
+        if 0.4 <= density <= 0.7:
+            percolations.append(
+                simulate_density(
+                    grid_size, density, bond_probability, steps, num_simulations * 2, flag_center, flag_neighbors
+                )
             )
-        )
+        else:
+            percolations.append(
+                simulate_density(
+                    grid_size, density, bond_probability, steps, num_simulations, flag_center, flag_neighbors
+                )
+            )
 
     print("Simulations completed.")
 
@@ -313,7 +319,7 @@ def plot_percolation_vs_density(
 
 
 def plot_percolation_vs_bond_probability(
-    grid_size, density, steps=1000, num_simulations=100
+    grid_size, density, steps=1000, num_simulations=100, flag_center=1, flag_neighbors=0
 ):
     """
     Runs multiple simulations for 20 different Bond Probabilitys and a given density,
@@ -325,7 +331,7 @@ def plot_percolation_vs_bond_probability(
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
     """
-    bond_probabilities = np.linspace(0, 1, 20)
+    bond_probabilities = np.linspace(0.1, 1, 20)
     percolations = []
 
     print("Starting simulation for different bond probabilities...")
@@ -333,11 +339,18 @@ def plot_percolation_vs_bond_probability(
     for bond_probability in tqdm(
         bond_probabilities, desc="Simulating bond probabilities"
     ):
-        percolations.append(
-            simulate_density(
-                grid_size, density, bond_probability, steps, num_simulations
+        if 0.3 <= bond_probability <= 0.8:
+            percolations.append(
+                simulate_density(
+                    grid_size, density, bond_probability, steps, num_simulations * 2, flag_center, flag_neighbors
+                )
             )
-        )
+        else:
+            percolations.append(
+                simulate_density(
+                    grid_size, density, bond_probability, steps, num_simulations, flag_center, flag_neighbors
+                )
+            )
 
     print("Simulations completed.")
 
@@ -372,7 +385,7 @@ def plot_percolation_vs_density_vs_bond_probability(
         flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
         flag_neighbors (int, optional): The flag to determine the neighborhood type. If 1, use the Moore neighborhood. If 0, use the Von Neumann neighborhood.
     """
-    bond_probabilities = np.linspace(0, 1, 10)
+    bond_probabilities = np.linspace(0.1, 1, 10)
     densities = np.linspace(0.1, 1, 20)
 
     plt.figure(figsize=(10, 8))
@@ -389,18 +402,32 @@ def plot_percolation_vs_density_vs_bond_probability(
         desc="Simulating bond probabilities",
         total=len(bond_probabilities),
     ):
-        percolations = simulate_and_collect_percolations(
-            grid_size,
-            densities,
-            bond_probability,
-            steps,
-            num_simulations,
-            flag_center,
-            flag_neighbors,
-        )
-        plot_percolation_results(
-            densities, percolations, bond_probability, color=colors[i]
-        )
+        if 0.3 <= bond_probability <= 0.8:
+            percolations = simulate_and_collect_percolations(
+                grid_size,
+                densities,
+                bond_probability,
+                steps,
+                num_simulations * 2,
+                flag_center,
+                flag_neighbors,
+            )
+            plot_percolation_results(
+                densities, percolations, bond_probability, color=colors[i]
+            )
+        else:
+            percolations = simulate_and_collect_percolations(
+                grid_size,
+                densities,
+                bond_probability,
+                steps,
+                num_simulations,
+                flag_center,
+                flag_neighbors,
+            )
+            plot_percolation_results(
+                densities, percolations, bond_probability, color=colors[i]
+            )
 
     print("Simulations completed.")
 
@@ -425,7 +452,7 @@ def plot_3d_percolation_vs_density_and_bond_probability(
         flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
     """
     densities = np.linspace(0.1, 1, 10)
-    bond_probabilities = np.linspace(0, 1, 10)
+    bond_probabilities = np.linspace(0.1, 1, 10)
 
     percolation_data = []
 
@@ -473,7 +500,7 @@ def plot_3d_gossip_spreader_counts(
     """
     # range of densities and Bond Probabilitys
     densities = np.linspace(0.1, 1, 10)
-    bond_probabilities = np.linspace(0, 1, 10)
+    bond_probabilities = np.linspace(0.1, 1, 10)
 
     spreader_counts = np.zeros((len(densities), len(bond_probabilities)))
 
@@ -564,6 +591,14 @@ def plot_time_status(
         for x in zip(*results_unoccupied["simulation_outcomes"])
     ]
 
+    std_gossip = [
+        np.std(x) for x in zip(*results_gossip["simulation_outcomes"])
+    ]
+
+    std_clueless = [
+        np.std(x) for x in zip(*results_clueless["simulation_outcomes"])
+    ]
+
     iterations = range(len(average_unoccupied))
 
     ax.plot(
@@ -581,7 +616,12 @@ def plot_time_status(
         label="GOSSIP_SPREADER",
         color=Colors.GOSSIP_SPREADER.value,
     )
-    ax.set_title(f"Density: {density}, Spread: {bond_probability}, Flag: {flag_center}")
+
+    ax.fill_between(iterations, np.array(average_gossip) - np.array(std_gossip), np.array(average_gossip) + np.array(std_gossip), color=Colors.GOSSIP_SPREADER.value, alpha=0.3, label="Standard Deviation Gossip Spreader")
+    ax.fill_between(iterations, np.array(average_clueless) - np.array(std_clueless), np.array(average_clueless) + np.array(std_clueless), color=Colors.CLUELESS_DARK.value, alpha=0.3, label="Standard Deviation Clueless")
+
+
+    ax.set_title(f"Density: {density}, Bond probability: {bond_probability}, Flag center: {flag_center}")
     ax.set_xlabel("Time Steps", fontsize=14)
     ax.set_ylabel("Number of Cells", fontsize=14)
     ax.set_xlim(x_limits)

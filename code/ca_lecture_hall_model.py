@@ -204,10 +204,6 @@ class Grid:
                 initial_spreader_i = random.randint(0, self.size - 1)
                 initial_spreader_j = random.randint(0, self.size - 1)
 
-        self.lecture_hall[initial_spreader_i][initial_spreader_j].set_status(
-            Status.GOSSIP_SPREADER
-        )
-
         # Add the bonds
         if (
             self.lecture_hall[initial_spreader_i][initial_spreader_j].status
@@ -230,6 +226,10 @@ class Grid:
                     self.bonds[((initial_spreader_i, initial_spreader_j), (m, n))] = (
                         probability
                     )
+        
+        self.lecture_hall[initial_spreader_i][initial_spreader_j].set_status(
+            Status.GOSSIP_SPREADER
+        )
 
     def initialize_board(self, flag_center=1, flag_neighbors=0):
         """
