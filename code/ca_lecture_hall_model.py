@@ -355,23 +355,13 @@ class Grid:
                 # Get neighbours and check if at least one of them is a gossip_spreader
                 neighbours = self.get_neighbours(i, j, flag_neighbors)
 
-                neighbour_statuses = []
-
                 for neighbour in neighbours:
                     m, n = neighbour[0], neighbour[1]
-                    neighbour_statuses.append(
-                        self.lecture_hall[m][n].is_gossip_spreader()
-                    )
 
-                if True in neighbour_statuses:
-                    # Update the status of the cell depending on the spreading probability of the cell and threshold
-                    s = current_cell.get_spreading_prob()
-
-                    if s > self.spread_threshold:
-                        new_lecture_hall[i][j].set_status(Status.GOSSIP_SPREADER)
-
-                    else:
-                        new_lecture_hall[i][j].set_status(Status.SECRET_KEEPER)
+                    if self.lecture_hall[m][n].is_gossip_spreader():
+                        if self.bonds[((i, j), (m, n))]:
+                            new_lecture_hall[i][j].set_status(Status.GOSSIP_SPREADER)
+                            break
 
         self.lecture_hall = new_lecture_hall
 
