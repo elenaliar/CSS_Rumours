@@ -544,7 +544,7 @@ def plot_time_status(ax, grid_size, density, spread_threshold, steps, num_simula
     ax.plot(iterations, average_unoccupied, label="UNOCCUPIED", color=Colors.UNOCCUPIED.value)
     ax.plot(iterations, average_clueless, label="CLUELESS", color=Colors.CLUELESS_DARK.value)
     ax.plot(iterations, average_secret, label="SECRET_KEEPER", color=Colors.SECRET_KEEPER.value)
-    ax.plot(iterations, average_gossip, label="GOSSIP_SPREADER", color=Colors.SECRET_KEEPER.value)
+    ax.plot(iterations, average_gossip, label="GOSSIP_SPREADER", color=Colors.GOSSIP_SPREADER.value)
     ax.set_title(f"Density: {density}, Spread: {spread_threshold}, Flag: {flag_center}")
     ax.set_xlabel("Time Steps", fontsize=14)
     ax.set_ylabel("Number of Cells", fontsize=14)

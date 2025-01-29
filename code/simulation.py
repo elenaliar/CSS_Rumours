@@ -195,7 +195,7 @@ def run_multiple_simulations_for_percolation(
         g = Grid(grid_size, density, spread_threshold)
         g.initialize_board(flag_center)
         run_simulation(g, steps, flag_neighbors)
-        results["simulation_outcomes"].append(g.check_percolation())
+        results["simulation_outcomes"].append(g.check_percolation(flag_neighbors=flag_neighbors))
 
     return results
 
