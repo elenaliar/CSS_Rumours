@@ -50,7 +50,7 @@ class Cell:
         set_spreading_prob(spreading_prob): Sets the spreading probability of the cell
     """
 
-    def __init__(self, status, spreading_prob=0):
+    def __init__(self, status):
         """
         Initializes a new Cell instance with a status and spreading probability.
 
@@ -62,15 +62,8 @@ class Cell:
         assert isinstance(
             status, Status
         ), f"status must be an instance of Status enum, got {type(status)}"
-        assert isinstance(
-            spreading_prob, (int, float)
-        ), f"spreading_prob must be a number, got {type(spreading_prob)}"
-        assert (
-            0 <= spreading_prob <= 1
-        ), f"spreading_prob must be between 0 and 1 (inclusive), got {spreading_prob}"
 
         self.status = status
-        self.spreading_prob = spreading_prob
 
     def get_status(self):
         """
@@ -112,31 +105,6 @@ class Cell:
         """
         return self.status == Status.CLUELESS
 
-    def get_spreading_prob(self):
-        """
-        Returns the current spreading probability of the cell.
-
-        Returns:
-            float: The current spreading probability.
-        """
-        return self.spreading_prob
-
-    def set_spreading_prob(self, spreading_prob):
-        """
-        Sets the spreading probability of the cell, ensuring it is between 0 and 1.
-
-        Parameters:
-            spreading_prob (float): The new spreading probability to set for the cell. Must be between 0 and 1 (inclusive).
-        """
-        assert isinstance(
-            spreading_prob, (int, float)
-        ), f"spreading_prob must be a number, got {type(spreading_prob)}"
-        assert (
-            0 <= spreading_prob <= 1
-        ), f"spreading_prob must be between 0 and 1 (inclusive), got {spreading_prob}"
-
-        self.spreading_prob = spreading_prob
-
     def __eq__(self, other):
         """
         Check if two cells are equal based on their status and spreading probability.
@@ -150,9 +118,7 @@ class Cell:
         if not isinstance(other, Cell):
             return NotImplemented
 
-        return (
-            self.status == other.status and self.spreading_prob == other.spreading_prob
-        )
+        return self.status == other.status
 
 
 class Grid:
@@ -618,7 +584,11 @@ class Grid:
                     or self.lecture_hall[0][j].get_status() == Status.SECRET_KEEPER
                 ) and not visited[0][j]:
                     if self.dfs(
-                        visited, 0, j, target_row=self.size - 1, flag_neighbors=flag_neighbors
+                        visited,
+                        0,
+                        j,
+                        target_row=self.size - 1,
+                        flag_neighbors=flag_neighbors,
                     ):  # Target row is the last row
                         return True
             return False
@@ -632,14 +602,18 @@ class Grid:
                     or self.lecture_hall[i][0].get_status() == Status.SECRET_KEEPER
                 ) and not visited[i][0]:
                     if self.dfs(
-                        visited, i, 0, target_col=self.size - 1, flag_neighbors=flag_neighbors
+                        visited,
+                        i,
+                        0,
+                        target_col=self.size - 1,
+                        flag_neighbors=flag_neighbors,
                     ):  # target column is the last column
                         return True
             return False
         else:
             raise ValueError("direction must be either 'vertical' or 'horizontal'")
 
-    def check_percolation(self, flag_neighbors = 1, direction="both"):
+    def check_percolation(self, flag_neighbors=1, direction="both"):
         """
         Checks if percolation occurs in the grid by checking for vertical and horizontal percolation.
         flag_neighbors (int): The flag to determine the type of neighbors to include. If 1, implement Moore neighborhood, if 0, implement Von Neumann neighborhood
