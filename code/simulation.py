@@ -302,7 +302,7 @@ def simulate_and_collect_percolations(
     """
     percolations = []
     for d in densities:
-        if 0.4 <= density <= 0.7:
+        if 0.4 <= d <= 0.7:
             percolations.append(
                 simulate_density(
                     grid_size,
@@ -331,7 +331,13 @@ def simulate_and_collect_percolations(
 
 
 def run_multiple_simulations_for_phase_diagram(
-    grid_size, density, bond_probability, steps, num_simulations, flag_center=1, flag_neighbors=0
+    grid_size,
+    density,
+    bond_probability,
+    steps,
+    num_simulations,
+    flag_center=1,
+    flag_neighbors=0,
 ):
     """
     Runs multiple simulations for a given density and spread threshold and for each simulation returns
