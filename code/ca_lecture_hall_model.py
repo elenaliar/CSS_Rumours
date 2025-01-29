@@ -191,6 +191,13 @@ class Grid:
             end = 3 * (self.size // 4)  # End index for the 10x10 subgrid
             initial_spreader_i = random.randint(start, end - 1)
             initial_spreader_j = random.randint(start, end - 1)
+
+            while (
+                self.lecture_hall[initial_spreader_i][initial_spreader_j].status
+                == Status.UNOCCUPIED
+            ):
+                initial_spreader_i = random.randint(start, end - 1)
+                initial_spreader_j = random.randint(start, end - 1)
         else:
             # Set the spreader outside the central subgrid
             # Randomly choose a row/column outside of the central block
@@ -198,8 +205,13 @@ class Grid:
             initial_spreader_j = random.randint(0, self.size - 1)
 
             # Ensure the spreader is outside the 10x10 region
-            while (self.size // 4 <= initial_spreader_i < 3 * (self.size // 4)) and (
-                self.size // 4 <= initial_spreader_j < 3 * (self.size // 4)
+            while (
+                (self.size // 4 <= initial_spreader_i < 3 * (self.size // 4))
+                and (self.size // 4 <= initial_spreader_j < 3 * (self.size // 4))
+                and (
+                    self.lecture_hall[initial_spreader_i][initial_spreader_j].status
+                    == Status.UNOCCUPIED
+                )
             ):
                 initial_spreader_i = random.randint(0, self.size - 1)
                 initial_spreader_j = random.randint(0, self.size - 1)
@@ -276,7 +288,7 @@ class Grid:
 
         self.lecture_hall[i][j].set_status(Status.GOSSIP_SPREADER)
 
-    def get_neighbours(self, i, j, flag_neighbors=1):
+    def get_neighbours(self, i, j, flag_neighbors=0):
         """
         Returns the list of neighbors for the cell at position (i, j).
 
@@ -328,7 +340,7 @@ class Grid:
 
         return neighbours
 
-    def update_grid(self, flag_neighbors=1):
+    def update_grid(self, flag_neighbors=0):
         """
         Updates the grid by iterating through each cell and changing their status based on neighboring gossip spreaders.
 
@@ -510,7 +522,7 @@ class Grid:
         print(f"GIF saved to: {gif_path}")
         print(f"All frames saved to: {images_dir}")
 
-    def dfs(self, visited, i, j, target_row=None, target_col=None, flag_neighbors=1):
+    def dfs(self, visited, i, j, target_row=None, target_col=None, flag_neighbors=0):
         """
         Performs a Depth-First Search (DFS) to explore a cluster of connected cells in the grid.
 
@@ -567,7 +579,7 @@ class Grid:
                 or self.dfs(visited, i, j - 1, target_row, target_col)
             )
 
-    def check_percolation_direction(self, direction, flag_neighbors=1):
+    def check_percolation_direction(self, direction, flag_neighbors=0):
         """
         Checks if percolation occurs in the grid in a given direction (vertical or horizontal).
 
@@ -618,7 +630,7 @@ class Grid:
         else:
             raise ValueError("direction must be either 'vertical' or 'horizontal'")
 
-    def check_percolation(self, flag_neighbors=1, direction="both"):
+    def check_percolation(self, flag_neighbors=0, direction="both"):
         """
         Checks if percolation occurs in the grid by checking for vertical and horizontal percolation.
         flag_neighbors (int): The flag to determine the type of neighbors to include. If 1, implement Moore neighborhood, if 0, implement Von Neumann neighborhood
