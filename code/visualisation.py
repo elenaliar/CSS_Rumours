@@ -410,7 +410,7 @@ def plot_percolation_vs_density_vs_bond_probability(
     plt.show()
 
 
-def plot_3d_percolation_vs_density_and_threshold(
+def plot_3d_percolation_vs_density_and_bond_probability(
     grid_size, steps=1000, num_simulations=100, flag_center=1
 ):
     """

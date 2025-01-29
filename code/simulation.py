@@ -318,7 +318,7 @@ def simulate_density(
     return sum(results["simulation_outcomes"]) / num_simulations
 
 
-def simulate_density_vs_threshold(
+def simulate_density_vs_bond_probability(
     grid_size, density, steps, num_simulations, flag_center=1
 ):
     """
