@@ -326,7 +326,7 @@ def simulate_and_collect_percolations(
                     flag_neighbors,
                 )
             )
-            
+
     return percolations
 
 
@@ -438,7 +438,7 @@ def run_multiple_simulations_for_timeplot_status(
 
     for i in range(num_simulations):
         g = Grid(grid_size, density, bond_probability)
-        g.initialize_board(flag_center)
+        g.initialize_board(flag_center, flag_neighbors)
 
         grids = run_simulation(g, steps, flag_neighbors)
 

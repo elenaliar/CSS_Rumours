@@ -621,7 +621,7 @@ def plot_time_status(
     ax.fill_between(iterations, np.array(average_clueless) - np.array(std_clueless), np.array(average_clueless) + np.array(std_clueless), color=Colors.CLUELESS_DARK.value, alpha=0.3, label="Standard Deviation Clueless")
 
 
-    ax.set_title(f"Density: {density}, Bond probability: {bond_probability}, Flag center: {flag_center}")
+    ax.set_title(f"Density: {density}, Bond prob: {bond_probability}")
     ax.set_xlabel("Time Steps", fontsize=14)
     ax.set_ylabel("Number of Cells", fontsize=14)
     ax.set_xlim(x_limits)
