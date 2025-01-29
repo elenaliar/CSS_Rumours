@@ -89,6 +89,7 @@ def simulate_and_create_video(
     bond_probability,
     steps=1000,
     flag_center=1,
+    flag_neighbors=0,
     save_animation=False,
     animation_name="gossip_spread_simulation.mp4",
 ):
@@ -109,8 +110,8 @@ def simulate_and_create_video(
             HTML: An HTML object containing the animation for rendering in Jupyter Notebook.
     """
     g = Grid(grid_size, density, bond_probability)
-    g.initialize_board(flag_center)
-    grids = run_simulation(g, steps)
+    g.initialize_board(flag_center, flag_neighbors)
+    grids = run_simulation(g, steps, flag_neighbors)
 
     return show_lecture_hall_over_time(grids, save_animation, animation_name)
 
@@ -265,7 +266,7 @@ def plot_percolation_results(
     Plots percolation results for different densities or spread thresholds.
     """
     label = label or (
-        f"bond_probability = {bond_probability}"
+        f"bond_probability = {bond_probability:.2f}"
         if bond_probability is not None
         else "Percolation"
     )
@@ -275,7 +276,12 @@ def plot_percolation_results(
 
 
 def plot_percolation_vs_density(
-    grid_size, bond_probability, steps=1000, num_simulations=100, flag_center=1, flag_neighbors=0
+    grid_size,
+    bond_probability,
+    steps=1000,
+    num_simulations=100,
+    flag_center=1,
+    flag_neighbors=0,
 ):
     """
     Runs multiple simulations for 20 different densities and a given spread thresholds,
@@ -296,13 +302,25 @@ def plot_percolation_vs_density(
         if 0.4 <= density <= 0.7:
             percolations.append(
                 simulate_density(
-                    grid_size, density, bond_probability, steps, num_simulations * 2, flag_center, flag_neighbors
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations * 2,
+                    flag_center,
+                    flag_neighbors,
                 )
             )
         else:
             percolations.append(
                 simulate_density(
-                    grid_size, density, bond_probability, steps, num_simulations, flag_center, flag_neighbors
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations,
+                    flag_center,
+                    flag_neighbors,
                 )
             )
 
@@ -342,13 +360,25 @@ def plot_percolation_vs_bond_probability(
         if 0.3 <= bond_probability <= 0.8:
             percolations.append(
                 simulate_density(
-                    grid_size, density, bond_probability, steps, num_simulations * 2, flag_center, flag_neighbors
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations * 2,
+                    flag_center,
+                    flag_neighbors,
                 )
             )
         else:
             percolations.append(
                 simulate_density(
-                    grid_size, density, bond_probability, steps, num_simulations, flag_center, flag_neighbors
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations,
+                    flag_center,
+                    flag_neighbors,
                 )
             )
 
@@ -591,13 +621,9 @@ def plot_time_status(
         for x in zip(*results_unoccupied["simulation_outcomes"])
     ]
 
-    std_gossip = [
-        np.std(x) for x in zip(*results_gossip["simulation_outcomes"])
-    ]
+    std_gossip = [np.std(x) for x in zip(*results_gossip["simulation_outcomes"])]
 
-    std_clueless = [
-        np.std(x) for x in zip(*results_clueless["simulation_outcomes"])
-    ]
+    std_clueless = [np.std(x) for x in zip(*results_clueless["simulation_outcomes"])]
 
     iterations = range(len(average_unoccupied))
 
@@ -617,9 +643,22 @@ def plot_time_status(
         color=Colors.GOSSIP_SPREADER.value,
     )
 
-    ax.fill_between(iterations, np.array(average_gossip) - np.array(std_gossip), np.array(average_gossip) + np.array(std_gossip), color=Colors.GOSSIP_SPREADER.value, alpha=0.3, label="Standard Deviation Gossip Spreader")
-    ax.fill_between(iterations, np.array(average_clueless) - np.array(std_clueless), np.array(average_clueless) + np.array(std_clueless), color=Colors.CLUELESS_DARK.value, alpha=0.3, label="Standard Deviation Clueless")
-
+    ax.fill_between(
+        iterations,
+        np.array(average_gossip) - np.array(std_gossip),
+        np.array(average_gossip) + np.array(std_gossip),
+        color=Colors.GOSSIP_SPREADER.value,
+        alpha=0.3,
+        label="Standard Deviation Gossip Spreader",
+    )
+    ax.fill_between(
+        iterations,
+        np.array(average_clueless) - np.array(std_clueless),
+        np.array(average_clueless) + np.array(std_clueless),
+        color=Colors.CLUELESS_DARK.value,
+        alpha=0.3,
+        label="Standard Deviation Clueless",
+    )
 
     ax.set_title(f"Density: {density}, Bond prob: {bond_probability}")
     ax.set_xlabel("Time Steps", fontsize=14)
