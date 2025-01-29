@@ -282,6 +282,8 @@ def plot_percolation_vs_density(
     num_simulations=100,
     flag_center=1,
     flag_neighbors=0,
+    save=False,
+    filename="percolation_density.png",
 ):
     """
     Runs multiple simulations for 20 different densities and a given spread thresholds,
@@ -333,11 +335,22 @@ def plot_percolation_vs_density(
     plt.title("Plot of percolation occurence for different density")
     plt.legend()
     plt.grid(True)
+
+    if save:
+        plt.savefig(filename, dpi=300)
+
     plt.show()
 
 
 def plot_percolation_vs_bond_probability(
-    grid_size, density, steps=1000, num_simulations=100, flag_center=1, flag_neighbors=0
+    grid_size,
+    density,
+    steps=1000,
+    num_simulations=100,
+    flag_center=1,
+    flag_neighbors=0,
+    save=False,
+    filename="percolation_bond_probability.png",
 ):
     """
     Runs multiple simulations for 20 different Bond Probabilitys and a given density,
@@ -398,11 +411,21 @@ def plot_percolation_vs_bond_probability(
     plt.title("Plot of Percolation vs Bond Probability")
     plt.legend()
     plt.grid(True)
+
+    if save:
+        plt.savefig(filename, dpi=300)
+
     plt.show()
 
 
 def plot_percolation_vs_density_vs_bond_probability(
-    grid_size, steps=1000, num_simulations=100, flag_center=1, flag_neighbors=0
+    grid_size,
+    steps=1000,
+    num_simulations=100,
+    flag_center=1,
+    flag_neighbors=0,
+    save=False,
+    filename="percolation_density_bond_probability.png",
 ):
     """
     Runs multiple simulations for 20 different densities and 10 different Bond Probabilitys,
@@ -466,11 +489,20 @@ def plot_percolation_vs_density_vs_bond_probability(
     plt.title("Percolation vs Density and Bond Probability")
     plt.legend()
     plt.grid(True)
+
+    if save:
+        plt.savefig(filename, dpi=300)
+
     plt.show()
 
 
 def plot_3d_percolation_vs_density_and_bond_probability(
-    grid_size, steps=1000, num_simulations=100, flag_center=1
+    grid_size,
+    steps=1000,
+    num_simulations=100,
+    flag_center=1,
+    save=False,
+    filename="3d_percolation.png",
 ):
     """
     Plots the percolation probability against density and Bond Probability as a 3D plot.
@@ -514,11 +546,20 @@ def plot_3d_percolation_vs_density_and_bond_probability(
     ax.set_title("3D Plot of Percolation vs Density and Bond Probability")
 
     fig.colorbar(surf, shrink=0.5, aspect=10, label="Percolation Probability")
+
+    if save:
+        plt.savefig(filename, dpi=300)
+
     plt.show()
 
 
 def plot_3d_gossip_spreader_counts(
-    grid_size, steps=1000, num_simulations=100, flag_center=1
+    grid_size,
+    steps=1000,
+    num_simulations=100,
+    flag_center=1,
+    save=False,
+    filename="3d_gossipers.png",
 ):
     """
     Plots the count of the GOSSIP_SPREADERS against density and Bond Probability as a 3D plot.
@@ -568,6 +609,10 @@ def plot_3d_gossip_spreader_counts(
         "Phase Diagram of Gossip Spreaders against Density and Bond Probability"
     )
     fig.colorbar(surface, ax=ax, shrink=0.6, aspect=10)
+
+    if save:
+        plt.savefig(filename, dpi=300)
+
     plt.show()
 
 
