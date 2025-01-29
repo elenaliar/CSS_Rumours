@@ -4,7 +4,6 @@ import random
 from enum import Enum
 
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.animation import PillowWriter
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch, Rectangle
@@ -50,7 +49,7 @@ class Cell:
         set_spreading_prob(spreading_prob): Sets the spreading probability of the cell
     """
 
-    def __init__(self, status, spreading_prob=0):
+    def __init__(self, status):
         """
         Initializes a new Cell instance with a status and spreading probability.
 
@@ -62,15 +61,8 @@ class Cell:
         assert isinstance(
             status, Status
         ), f"status must be an instance of Status enum, got {type(status)}"
-        assert isinstance(
-            spreading_prob, (int, float)
-        ), f"spreading_prob must be a number, got {type(spreading_prob)}"
-        assert (
-            0 <= spreading_prob <= 1
-        ), f"spreading_prob must be between 0 and 1 (inclusive), got {spreading_prob}"
 
         self.status = status
-        self.spreading_prob = spreading_prob
 
     def get_status(self):
         """
@@ -112,31 +104,6 @@ class Cell:
         """
         return self.status == Status.CLUELESS
 
-    def get_spreading_prob(self):
-        """
-        Returns the current spreading probability of the cell.
-
-        Returns:
-            float: The current spreading probability.
-        """
-        return self.spreading_prob
-
-    def set_spreading_prob(self, spreading_prob):
-        """
-        Sets the spreading probability of the cell, ensuring it is between 0 and 1.
-
-        Parameters:
-            spreading_prob (float): The new spreading probability to set for the cell. Must be between 0 and 1 (inclusive).
-        """
-        assert isinstance(
-            spreading_prob, (int, float)
-        ), f"spreading_prob must be a number, got {type(spreading_prob)}"
-        assert (
-            0 <= spreading_prob <= 1
-        ), f"spreading_prob must be between 0 and 1 (inclusive), got {spreading_prob}"
-
-        self.spreading_prob = spreading_prob
-
     def __eq__(self, other):
         """
         Check if two cells are equal based on their status and spreading probability.
@@ -150,9 +117,7 @@ class Cell:
         if not isinstance(other, Cell):
             return NotImplemented
 
-        return (
-            self.status == other.status and self.spreading_prob == other.spreading_prob
-        )
+        return self.status == other.status
 
 
 class Grid:
@@ -176,14 +141,14 @@ class Grid:
         check_percolation(): Checks whether percolation happens in both directions and returns either True or False.
     """
 
-    def __init__(self, size, density, spread_threshold):
+    def __init__(self, size, density, bond_probability):
         """
-        Initializes the Grid with the specified size, density, and spreading threshold.
+        Initializes the Grid with the specified size, density, and bond probability.
 
         Parameters:
             size (int): The size of the grid (number of rows and columns).
             density (float): The fraction of cells to be initially filled as clueless. Must be between 0 and 1 (inclusive).
-            spread_threshold (float): The probability threshold for a clueless cell to become a gossip spreader. Must be between 0 and 1 (inclusive).
+            bond_probability (float): TODO
         """
         assert isinstance(size, int), f"size must be an integer, got {type(size)}"
         assert size > 0, f"size must be greater than 0, got {size}"
@@ -194,18 +159,19 @@ class Grid:
             0 <= density <= 1
         ), f"density must be between 0 and 1 (inclusive), got {density}"
         assert isinstance(
-            spread_threshold, (int, float)
-        ), f"spread_threshold must be a number, got {type(spread_threshold)}"
+            bond_probability, (int, float)
+        ), f"bond_probability must be a number, got {type(bond_probability)}"
         assert (
-            0 <= spread_threshold <= 1
-        ), f"spread_threshold must be between 0 and 1 (inclusive), got {spread_threshold}"
+            0 <= bond_probability <= 1
+        ), f"bond_probability must be between 0 and 1 (inclusive), got {bond_probability}"
 
         self.size = size
         self.lecture_hall = []
+        self.bonds = {}
         self.density = density
-        self.spread_threshold = spread_threshold
+        self.bond_probability = bond_probability
 
-    def set_initial_spreader(self, flag_center):
+    def set_initial_spreader(self, flag_center=1, flag_neighbors=0):
         """Sets the initial spreader in the lecture hall grid.
 
         Parameters:
@@ -238,11 +204,34 @@ class Grid:
                 initial_spreader_i = random.randint(0, self.size - 1)
                 initial_spreader_j = random.randint(0, self.size - 1)
 
+        # Add the bonds
+        if (
+            self.lecture_hall[initial_spreader_i][initial_spreader_j].status
+            == Status.UNOCCUPIED
+        ):
+            neighbours = self.get_neighbours(
+                initial_spreader_i, initial_spreader_j, flag_neighbors
+            )
+
+            for neighbour in neighbours:
+                m, n = neighbour[0], neighbour[1]
+                if self.lecture_hall[m][n].status == Status.CLUELESS:
+                    probability = random.choices(
+                        [0, 1],
+                        weights=[1 - self.bond_probability, self.bond_probability],
+                    )[0]
+                    self.bonds[((m, n), (initial_spreader_i, initial_spreader_j))] = (
+                        probability
+                    )
+                    self.bonds[((initial_spreader_i, initial_spreader_j), (m, n))] = (
+                        probability
+                    )
+        
         self.lecture_hall[initial_spreader_i][initial_spreader_j].set_status(
             Status.GOSSIP_SPREADER
         )
 
-    def initialize_board(self, flag_center=1):
+    def initialize_board(self, flag_center=1, flag_neighbors=0):
         """
         Initializes the grid as fully unoccupied, and randomly selects some cells to be filled as clueless.
 
@@ -254,6 +243,7 @@ class Grid:
             - If 1, the initial spreader is placed in the central subgrid of the lecture hall
               (approximately a square of size self.size/2 x self.size/2).
             - If 0, the initial spreader is placed near the edges of the lecture hall, outside the central region.
+            TODO
         """
         assert flag_center in [
             0,
@@ -275,10 +265,24 @@ class Grid:
         # Set the status of selected cells to clueless and assign spreading probability
         for i, j in selected_cells:
             self.lecture_hall[i][j].set_status(Status.CLUELESS)
-            self.lecture_hall[i][j].set_spreading_prob(np.random.uniform(0, 1))
+
+        for i, j in selected_cells:
+            # get all the neighbours
+            neighbours = self.get_neighbours(i, j, flag_neighbors)
+
+            for neighbour in neighbours:
+                m, n = neighbour[0], neighbour[1]
+                if self.lecture_hall[m][n].status == Status.CLUELESS:
+                    if ((m, n), (i, j)) in self.bonds.keys():
+                        self.bonds[((i, j), (m, n))] = self.bonds[((m, n), (i, j))]
+                    else:
+                        self.bonds[((i, j), (m, n))] = random.choices(
+                            [0, 1],
+                            weights=[1 - self.bond_probability, self.bond_probability],
+                        )[0]
 
         # set initial spot, flag=1 for center, 0 for outside
-        self.set_initial_spreader(flag_center)
+        self.set_initial_spreader(flag_center, flag_neighbors)
 
     def set_spreader(self, i, j):
         """
@@ -295,7 +299,7 @@ class Grid:
 
         self.lecture_hall[i][j].set_status(Status.GOSSIP_SPREADER)
 
-    def get_neighbours(self, i, j, flag_neighbors=1):
+    def get_neighbours(self, i, j, flag_neighbors=0):
         """
         Returns the list of neighbors for the cell at position (i, j).
 
@@ -319,35 +323,35 @@ class Grid:
 
         # Top neighbour
         if i > 0:
-            neighbours.append(self.lecture_hall[i - 1][j])
+            neighbours.append((i - 1, j))
             # upper diagonal neighbors
             if flag_neighbors == 1:
                 if j > 0:
-                    neighbours.append(self.lecture_hall[i - 1][j - 1])
+                    neighbours.append((i - 1, j - 1))
                 if j < self.size - 1:
-                    neighbours.append(self.lecture_hall[i - 1][j + 1])
+                    neighbours.append((i - 1, j + 1))
 
         # Bottom neighbour
         if i < self.size - 1:
-            neighbours.append(self.lecture_hall[i + 1][j])
+            neighbours.append((i + 1, j))
             # bottom diagonal neighbors
             if flag_neighbors == 1:
                 if j > 0:
-                    neighbours.append(self.lecture_hall[i + 1][j - 1])
+                    neighbours.append((i + 1, j - 1))
                 if j < self.size - 1:
-                    neighbours.append(self.lecture_hall[i + 1][j + 1])
+                    neighbours.append((i + 1, j + 1))
 
         # Left neighbour
         if j > 0:
-            neighbours.append(self.lecture_hall[i][j - 1])
+            neighbours.append((i, j - 1))
 
         # Right neighbour
         if j < self.size - 1:
-            neighbours.append(self.lecture_hall[i][j + 1])
+            neighbours.append((i, j + 1))
 
         return neighbours
 
-    def update_grid(self, flag_neighbors=1):
+    def update_grid(self, flag_neighbors=0):
         """
         Updates the grid by iterating through each cell and changing their status based on neighboring gossip spreaders.
 
@@ -374,19 +378,13 @@ class Grid:
                 # Get neighbours and check if at least one of them is a gossip_spreader
                 neighbours = self.get_neighbours(i, j, flag_neighbors)
 
-                neighbour_statuses = [
-                    neighbour.is_gossip_spreader() for neighbour in neighbours
-                ]
+                for neighbour in neighbours:
+                    m, n = neighbour[0], neighbour[1]
 
-                if True in neighbour_statuses:
-                    # Update the status of the cell depending on the spreading probability of the cell and threshold
-                    s = current_cell.get_spreading_prob()
-
-                    if s > self.spread_threshold:
-                        new_lecture_hall[i][j].set_status(Status.GOSSIP_SPREADER)
-
-                    else:
-                        new_lecture_hall[i][j].set_status(Status.SECRET_KEEPER)
+                    if self.lecture_hall[m][n].is_gossip_spreader():
+                        if self.bonds[((i, j), (m, n))]:
+                            new_lecture_hall[i][j].set_status(Status.GOSSIP_SPREADER)
+                            break
 
         self.lecture_hall = new_lecture_hall
 
@@ -422,7 +420,7 @@ class Grid:
                 facecolor=color, edgecolor="black", label=f"{state}"
             )  # TODO: use the names of states instead of numbers
             for state, color in zip(
-                ["UNOCCUPIED", "CLUELESS", "SECRET KEEPER", "GOSSIP SPREADER"], colors
+                ["UNOCCUPIED", "CLUELESS", "GOSSIP SPREADER"], colors
             )
         ]
 
@@ -448,7 +446,6 @@ class Grid:
         colors = [
             Colors.UNOCCUPIED.value,
             Colors.CLUELESS.value,
-            Colors.SECRET_KEEPER.value,
             Colors.GOSSIP_SPREADER.value,
         ]
         cmap = ListedColormap(colors)
@@ -482,7 +479,6 @@ class Grid:
         colors = [
             Colors.UNOCCUPIED.value,
             Colors.CLUELESS.value,
-            Colors.SECRET_KEEPER.value,
             Colors.GOSSIP_SPREADER.value,
         ]
         cmap = ListedColormap(colors)
@@ -537,129 +533,28 @@ class Grid:
         print(f"GIF saved to: {gif_path}")
         print(f"All frames saved to: {images_dir}")
 
-    def dfs(self, visited, i, j, target_row=None, target_col=None, flag_neighbors=1):
-        """
-        Performs a Depth-First Search (DFS) to explore a cluster of connected cells in the grid.
+    def check_percolation(self):
+        percolation_vertical = 0
+        percolation_horizonatl = 0
 
-        This function recursively visits all connected cells, checking all four neighbors (up, down, left, and right)
-        for connectivity. It will stop when all possible cells in the cluster have been visited.
+        # First row
+        first_row = [cell.status for cell in self.lecture_hall[0]]
+        if Status.GOSSIP_SPREADER in first_row:
+            percolation_vertical += 1
 
-        Parameters:
-            i (int): The row index of the current cell to start the DFS from.
-            j (int): The column index of the current cell to start the DFS from.
-            target_row (int, optional): The row index we are trying to reach (for vertical percolation).
-            target_col (int, optional): The column index we are trying to reach (for horizontal percolation).
-            flag_neighbors (int): The flag to determine the type of neighbors to include. If 1, implement Moore neighborhood, if 0, implement Von Neumann neighborhood
+        # Last row
+        last_row = [cell.status for cell in self.lecture_hall[-1]]
+        if Status.GOSSIP_SPREADER in last_row:
+            percolation_vertical += 1
 
-        Returns:
-            bool: True if we have reached the target row or column (i.e., percolation has occurred), False otherwise.
-        """
-        # check if the current cell is within bounds, is not visited, and is occupied
-        if (
-            i < 0
-            or i >= self.size
-            or j < 0
-            or j >= self.size
-            or visited[i][j]
-            or self.lecture_hall[i][j].get_status() != Status.GOSSIP_SPREADER
-        ):
-            return False
+        # First column
+        first_col = [self.lecture_hall[row][0].status for row in range(self.size)]
+        if Status.GOSSIP_SPREADER in first_col:
+            percolation_horizonatl += 1
 
-        # mark this cell as visited
-        visited[i][j] = True
+        # Last column
+        last_col = [self.lecture_hall[row][-1].status for row in range(self.size)]
+        if Status.GOSSIP_SPREADER in last_col:
+            percolation_horizonatl += 1
 
-        # if we've reached the target row or column, return True (percolation occurred)
-        if (target_row is not None and i == target_row) or (
-            target_col is not None and j == target_col
-        ):
-            return True
-
-        # explore all four possible neighbors: down, up, right, left
-        if flag_neighbors == 1:
-            return (
-                self.dfs(visited, i + 1, j, target_row, target_col)
-                or self.dfs(visited, i - 1, j, target_row, target_col)
-                or self.dfs(visited, i, j + 1, target_row, target_col)
-                or self.dfs(visited, i, j - 1, target_row, target_col)
-                or self.dfs(visited, i + 1, j + 1, target_row, target_col)
-                or self.dfs(visited, i - 1, j - 1, target_row, target_col)
-                or self.dfs(visited, i + 1, j - 1, target_row, target_col)
-                or self.dfs(visited, i - 1, j + 1, target_row, target_col)
-            )
-        else:
-            return (
-                self.dfs(visited, i + 1, j, target_row, target_col)
-                or self.dfs(visited, i - 1, j, target_row, target_col)
-                or self.dfs(visited, i, j + 1, target_row, target_col)
-                or self.dfs(visited, i, j - 1, target_row, target_col)
-            )
-
-    def check_percolation_direction(self, direction, flag_neighbors=1):
-        """
-        Checks if percolation occurs in the grid in a given direction (vertical or horizontal).
-
-        Parameters:
-            direction (str): The direction to check for percolation. Can be either 'vertical' or 'horizontal'.
-            flag_neighbors (int): The flag to determine the type of neighbors to include. If 1, implement Moore neighborhood, if 0, implement Von Neumann neighborhood
-
-        Returns:
-            bool: True if percolation occurs in the specified direction, False otherwise.
-
-        Raises:
-            ValueError: If the direction is not 'vertical' or 'horizontal'.
-        """
-        if direction == "vertical":
-            visited = [[False for _ in range(self.size)] for _ in range(self.size)]
-
-            # start DFS from any occupied cell in the top row (row 0)
-            for j in range(self.size):
-                if (
-                    self.lecture_hall[0][j].get_status() == Status.GOSSIP_SPREADER
-                    or self.lecture_hall[0][j].get_status() == Status.SECRET_KEEPER
-                ) and not visited[0][j]:
-                    if self.dfs(
-                        visited, 0, j, target_row=self.size - 1, flag_neighbors=flag_neighbors
-                    ):  # Target row is the last row
-                        return True
-            return False
-        elif direction == "horizontal":
-            visited = [[False for _ in range(self.size)] for _ in range(self.size)]
-
-            # start DFS from any occupied cell in the leftmost column (column 0)
-            for i in range(self.size):
-                if (
-                    self.lecture_hall[i][0].get_status() == Status.GOSSIP_SPREADER
-                    or self.lecture_hall[i][0].get_status() == Status.SECRET_KEEPER
-                ) and not visited[i][0]:
-                    if self.dfs(
-                        visited, i, 0, target_col=self.size - 1, flag_neighbors=flag_neighbors
-                    ):  # target column is the last column
-                        return True
-            return False
-        else:
-            raise ValueError("direction must be either 'vertical' or 'horizontal'")
-
-    def check_percolation(self, flag_neighbors = 1, direction="both"):
-        """
-        Checks if percolation occurs in the grid by checking for vertical and horizontal percolation.
-        flag_neighbors (int): The flag to determine the type of neighbors to include. If 1, implement Moore neighborhood, if 0, implement Von Neumann neighborhood
-
-        Returns:
-            bool: True if both vertical and horizontal percolation occurs, False otherwise.
-        """
-        if direction == "vertical":
-            return self.check_percolation_direction("vertical", flag_neighbors)
-        elif direction == "horizontal":
-            return self.check_percolation_direction("horizontal", flag_neighbors)
-        elif direction == "both":
-            return self.check_percolation_direction(
-                "vertical"
-            ) and self.check_percolation_direction("horizontal", flag_neighbors)
-        elif direction == "any":
-            return self.check_percolation_direction(
-                "vertical"
-            ) or self.check_percolation_direction("horizontal", flag_neighbors)
-        else:
-            raise ValueError(
-                "direction must be either 'vertical' or 'horizontal', 'both' or 'any'"
-            )
+        return percolation_vertical == 2 or percolation_horizonatl == 2
