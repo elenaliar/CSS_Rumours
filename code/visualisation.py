@@ -212,7 +212,7 @@ def simulate_and_plot_gossip_model_all_combinations(
     for density in densities:
         for bond_probability in bond_probabilities:
             print(
-                f"Running simulations for Density={density}, Spread Threshold={bond_probability}, Grid={grid_size}x{grid_size}"
+                f"Running simulations for Density={density}, Bond Probability={bond_probability}, Grid={grid_size}x{grid_size}"
             )
 
             # Run multiple simulations for this parameter set
@@ -245,7 +245,7 @@ def simulate_and_plot_gossip_model_all_combinations(
             all_aggregated_distributions.append(aggregated_distribution)
 
             # Create a label for this parameter combination
-            labels.append(f"Density={density}, Threshold={bond_probability}")
+            labels.append(f"Density={density}, Bond Probability={bond_probability}")
 
     # Plot all aggregated distributions on the same log-log graph
     aggregate_and_plot_cluster_distributions(
@@ -314,7 +314,7 @@ def plot_percolation_vs_bond_probability(
     grid_size, density, steps=1000, num_simulations=100
 ):
     """
-    Runs multiple simulations for 20 different spreading thresholds and a given density,
+    Runs multiple simulations for 20 different Bond Probabilitys and a given density,
     calculates the probability of a percolation occuring, and plots it.
 
     Parameters:
@@ -326,9 +326,11 @@ def plot_percolation_vs_bond_probability(
     bond_probabilities = np.linspace(0, 1, 20)
     percolations = []
 
-    print("Starting simulation for different spread thresholds...")
+    print("Starting simulation for different bond probabilities...")
 
-    for bond_probability in tqdm(bond_probabilities, desc="Simulating thresholds"):
+    for bond_probability in tqdm(
+        bond_probabilities, desc="Simulating bond probabilities"
+    ):
         percolations.append(
             simulate_density(
                 grid_size, density, bond_probability, steps, num_simulations
@@ -346,9 +348,9 @@ def plot_percolation_vs_bond_probability(
         color="blue",
         label=f"density = {density:.2f}",
     )
-    plt.xlabel("Spread Threshold")
+    plt.xlabel("Bond Probability")
     plt.ylabel("Fraction of Simulations with Percolation")
-    plt.title("Plot of Percolation vs Spread Threshold")
+    plt.title("Plot of Percolation vs Bond Probability")
     plt.legend()
     plt.grid(True)
     plt.show()
@@ -358,7 +360,7 @@ def plot_percolation_vs_density_vs_bond_probability(
     grid_size, steps=1000, num_simulations=100, flag_center=1, flag_neighbors=1
 ):
     """
-    Runs multiple simulations for 20 different densities and 10 different spreading thresholds,
+    Runs multiple simulations for 20 different densities and 10 different Bond Probabilitys,
     calculates the probability of a percolation occuring, and plots it.
 
     Parameters:
@@ -382,7 +384,7 @@ def plot_percolation_vs_density_vs_bond_probability(
 
     for i, bond_probability in tqdm(
         enumerate(bond_probabilities),
-        desc="Simulating thresholds",
+        desc="Simulating bond probabilities",
         total=len(bond_probabilities),
     ):
         percolations = simulate_and_collect_percolations(
@@ -402,7 +404,7 @@ def plot_percolation_vs_density_vs_bond_probability(
 
     plt.xlabel("Density")
     plt.ylabel("Fraction of simulations with percolation")
-    plt.title("Percolation vs Density and Spread Threshold")
+    plt.title("Percolation vs Density and Bond Probability")
     plt.legend()
     plt.grid(True)
     plt.show()
@@ -412,7 +414,7 @@ def plot_3d_percolation_vs_density_and_threshold(
     grid_size, steps=1000, num_simulations=100, flag_center=1
 ):
     """
-    Plots the percolation probability against density and spreading threshold as a 3D plot.
+    Plots the percolation probability against density and Bond Probability as a 3D plot.
 
     Parameters:
         grid_size (int): The size of the grid for the simulations.
@@ -421,32 +423,36 @@ def plot_3d_percolation_vs_density_and_threshold(
         flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
     """
     densities = np.linspace(0, 1, 10)
-    thresholds = np.linspace(0, 1, 10)
+    bond_probabilities = np.linspace(0, 1, 10)
 
     percolation_data = []
 
-    for threshold in tqdm(thresholds, desc="Simulating thresholds"):
+    for probability in tqdm(bond_probabilities, desc="Simulating bond probabilities"):
         # Use the simulate_and_collect_percolations function for densities
         percolations = simulate_and_collect_percolations(
-            grid_size, densities, threshold, steps, num_simulations, flag_center
+            grid_size, densities, probability, steps, num_simulations, flag_center
         )
         percolation_data.append(percolations)
 
     # Convert data to arrays for plotting
-    thresholds, densities = np.meshgrid(thresholds, densities)
+    bond_probabilities, densities = np.meshgrid(bond_probabilities, densities)
     percolations = np.transpose(np.array(percolation_data))
 
-    pink_colormap = get_pink_colormap(len(thresholds))
+    pink_colormap = get_pink_colormap(len(bond_probabilities))
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection="3d")
     surf = ax.plot_surface(
-        thresholds, densities, percolations, cmap=pink_colormap, edgecolor="none"
+        bond_probabilities,
+        densities,
+        percolations,
+        cmap=pink_colormap,
+        edgecolor="none",
     )
 
     ax.set_ylabel("Density")
-    ax.set_xlabel("Spread Threshold")
+    ax.set_xlabel("Bond Probability")
     ax.set_zlabel("Percolation Probability")
-    ax.set_title("3D Plot of Percolation vs Density and Spread Threshold")
+    ax.set_title("3D Plot of Percolation vs Density and Bond Probability")
 
     fig.colorbar(surf, shrink=0.5, aspect=10, label="Percolation Probability")
     plt.show()
@@ -456,14 +462,14 @@ def plot_3d_gossip_spreader_counts(
     grid_size, steps=1000, num_simulations=100, flag_center=1
 ):
     """
-    Plots the count of the GOSSIP_SPREADERS against density and spreading threshold as a 3D plot.
+    Plots the count of the GOSSIP_SPREADERS against density and Bond Probability as a 3D plot.
 
     Parameters:
         grid_size (int): The size of the grid for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
     """
-    # range of densities and spreading thresholds
+    # range of densities and Bond Probabilitys
     densities = np.linspace(0, 1, 10)
     bond_probabilities = np.linspace(0, 1, 10)
 
@@ -471,7 +477,7 @@ def plot_3d_gossip_spreader_counts(
 
     for i, bond_probability in tqdm(
         enumerate(bond_probabilities),
-        desc="Spread Thresholds",
+        desc="Bond Probability",
         total=len(bond_probabilities),
     ):
         for j, density in enumerate(densities):
@@ -496,11 +502,11 @@ def plot_3d_gossip_spreader_counts(
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(projection="3d")
     surface = ax.plot_surface(X, Y, Z, cmap=pink_colormap)
-    ax.set_xlabel("Spreading Threshold")
+    ax.set_xlabel("Bond Probability")
     ax.set_ylabel("Density")
     ax.set_zlabel("Average Amount of Gossip Spreaders")
     ax.set_title(
-        "Phase Diagram of Gossip Spreaders against Density and Spreading Threshold"
+        "Phase Diagram of Gossip Spreaders against Density and Bond Probability"
     )
     fig.colorbar(surface, ax=ax, shrink=0.6, aspect=10)
     plt.show()
@@ -526,7 +532,7 @@ def plot_time_status(
         steps (int): The number of time steps (iterations) for each simulation.
         num_simulations (int): The number of simulations to run.
         density (float): The density of the grid.
-        bond_probability (float): The spreading threshold for the gossip model.
+        bond_probability (float): The Bond Probability for the gossip model.
         flag_center (int): Flag to determine the position of initial spreader
         x_limits (tuple): Limits for the x-axis (time).
         y_limits (tuple): Limits for the y-axis (number of cells).
