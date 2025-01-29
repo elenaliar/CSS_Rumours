@@ -4,7 +4,6 @@ import random
 from enum import Enum
 
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.animation import PillowWriter
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch, Rectangle
@@ -142,14 +141,14 @@ class Grid:
         check_percolation(): Checks whether percolation happens in both directions and returns either True or False.
     """
 
-    def __init__(self, size, density, spread_threshold):
+    def __init__(self, size, density, bond_probability):
         """
-        Initializes the Grid with the specified size, density, and spreading threshold.
+        Initializes the Grid with the specified size, density, and bond probability.
 
         Parameters:
             size (int): The size of the grid (number of rows and columns).
             density (float): The fraction of cells to be initially filled as clueless. Must be between 0 and 1 (inclusive).
-            spread_threshold (float): The probability threshold for a clueless cell to become a gossip spreader. Must be between 0 and 1 (inclusive).
+            bond_probability (float): TODO
         """
         assert isinstance(size, int), f"size must be an integer, got {type(size)}"
         assert size > 0, f"size must be greater than 0, got {size}"
@@ -160,16 +159,17 @@ class Grid:
             0 <= density <= 1
         ), f"density must be between 0 and 1 (inclusive), got {density}"
         assert isinstance(
-            spread_threshold, (int, float)
-        ), f"spread_threshold must be a number, got {type(spread_threshold)}"
+            bond_probability, (int, float)
+        ), f"bond_probability must be a number, got {type(bond_probability)}"
         assert (
-            0 <= spread_threshold <= 1
-        ), f"spread_threshold must be between 0 and 1 (inclusive), got {spread_threshold}"
+            0 <= bond_probability <= 1
+        ), f"bond_probability must be between 0 and 1 (inclusive), got {bond_probability}"
 
         self.size = size
         self.lecture_hall = []
+        self.bonds = {}
         self.density = density
-        self.spread_threshold = spread_threshold
+        self.bond_probability = bond_probability
 
     def set_initial_spreader(self, flag_center):
         """Sets the initial spreader in the lecture hall grid.
@@ -208,7 +208,7 @@ class Grid:
             Status.GOSSIP_SPREADER
         )
 
-    def initialize_board(self, flag_center=1):
+    def initialize_board(self, flag_center=1, flag_neighbors=0):
         """
         Initializes the grid as fully unoccupied, and randomly selects some cells to be filled as clueless.
 
@@ -220,6 +220,7 @@ class Grid:
             - If 1, the initial spreader is placed in the central subgrid of the lecture hall
               (approximately a square of size self.size/2 x self.size/2).
             - If 0, the initial spreader is placed near the edges of the lecture hall, outside the central region.
+            TODO
         """
         assert flag_center in [
             0,
@@ -241,7 +242,21 @@ class Grid:
         # Set the status of selected cells to clueless and assign spreading probability
         for i, j in selected_cells:
             self.lecture_hall[i][j].set_status(Status.CLUELESS)
-            self.lecture_hall[i][j].set_spreading_prob(np.random.uniform(0, 1))
+
+        for i, j in selected_cells:
+            # get all the neighbours
+            neighbours = self.get_neighbours(i, j, flag_neighbors)
+
+            for neighbour in neighbours:
+                m, n = neighbour[0], neighbour[1]
+                if self.lecture_hall[m][n].status == Status.CLUELESS:
+                    if ((m, n), (i, j)) in self.bonds.keys():
+                        self.bonds[((i, j), (m, n))] = self.bonds[((m, n), (i, j))]
+                    else:
+                        self.bonds[((i, j), (m, n))] = random.choices(
+                            [0, 1],
+                            weights=[1 - self.bond_probability, self.bond_probability],
+                        )[0]
 
         # set initial spot, flag=1 for center, 0 for outside
         self.set_initial_spreader(flag_center)
@@ -285,31 +300,31 @@ class Grid:
 
         # Top neighbour
         if i > 0:
-            neighbours.append(self.lecture_hall[i - 1][j])
+            neighbours.append((i - 1, j))
             # upper diagonal neighbors
             if flag_neighbors == 1:
                 if j > 0:
-                    neighbours.append(self.lecture_hall[i - 1][j - 1])
+                    neighbours.append((i - 1, j - 1))
                 if j < self.size - 1:
-                    neighbours.append(self.lecture_hall[i - 1][j + 1])
+                    neighbours.append((i - 1, j + 1))
 
         # Bottom neighbour
         if i < self.size - 1:
-            neighbours.append(self.lecture_hall[i + 1][j])
+            neighbours.append((i + 1, j))
             # bottom diagonal neighbors
             if flag_neighbors == 1:
                 if j > 0:
-                    neighbours.append(self.lecture_hall[i + 1][j - 1])
+                    neighbours.append((i + 1, j - 1))
                 if j < self.size - 1:
-                    neighbours.append(self.lecture_hall[i + 1][j + 1])
+                    neighbours.append((i + 1, j + 1))
 
         # Left neighbour
         if j > 0:
-            neighbours.append(self.lecture_hall[i][j - 1])
+            neighbours.append((i, j - 1))
 
         # Right neighbour
         if j < self.size - 1:
-            neighbours.append(self.lecture_hall[i][j + 1])
+            neighbours.append((i, j + 1))
 
         return neighbours
 
@@ -340,9 +355,13 @@ class Grid:
                 # Get neighbours and check if at least one of them is a gossip_spreader
                 neighbours = self.get_neighbours(i, j, flag_neighbors)
 
-                neighbour_statuses = [
-                    neighbour.is_gossip_spreader() for neighbour in neighbours
-                ]
+                neighbour_statuses = []
+
+                for neighbour in neighbours:
+                    m, n = neighbour[0], neighbour[1]
+                    neighbour_statuses.append(
+                        self.lecture_hall[m][n].is_gossip_spreader()
+                    )
 
                 if True in neighbour_statuses:
                     # Update the status of the cell depending on the spreading probability of the cell and threshold
@@ -388,7 +407,7 @@ class Grid:
                 facecolor=color, edgecolor="black", label=f"{state}"
             )  # TODO: use the names of states instead of numbers
             for state, color in zip(
-                ["UNOCCUPIED", "CLUELESS", "SECRET KEEPER", "GOSSIP SPREADER"], colors
+                ["UNOCCUPIED", "CLUELESS", "GOSSIP SPREADER"], colors
             )
         ]
 
@@ -414,7 +433,6 @@ class Grid:
         colors = [
             Colors.UNOCCUPIED.value,
             Colors.CLUELESS.value,
-            Colors.SECRET_KEEPER.value,
             Colors.GOSSIP_SPREADER.value,
         ]
         cmap = ListedColormap(colors)
@@ -448,7 +466,6 @@ class Grid:
         colors = [
             Colors.UNOCCUPIED.value,
             Colors.CLUELESS.value,
-            Colors.SECRET_KEEPER.value,
             Colors.GOSSIP_SPREADER.value,
         ]
         cmap = ListedColormap(colors)
@@ -581,7 +598,6 @@ class Grid:
             for j in range(self.size):
                 if (
                     self.lecture_hall[0][j].get_status() == Status.GOSSIP_SPREADER
-                    or self.lecture_hall[0][j].get_status() == Status.SECRET_KEEPER
                 ) and not visited[0][j]:
                     if self.dfs(
                         visited,
@@ -599,7 +615,6 @@ class Grid:
             for i in range(self.size):
                 if (
                     self.lecture_hall[i][0].get_status() == Status.GOSSIP_SPREADER
-                    or self.lecture_hall[i][0].get_status() == Status.SECRET_KEEPER
                 ) and not visited[i][0]:
                     if self.dfs(
                         visited,
