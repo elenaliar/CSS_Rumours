@@ -11,7 +11,7 @@ def run_simulation(grid, steps=1000, flag_neighbors=0):
     Parameters:
         grid (Grid): The initial grid to run the simulation on
         steps (int): The number of steps to simulate.
-        flag_neighbors (int): The flag to determine the neighborhood type. If 1, the Moore neighborhood is used. If 0, the Von Neumann neighborhood is used.
+        flag_neighbors (int): The flag to determine the neighborhood type (1 for Moore, 0 for Von Neumann).
 
     Returns:
         (list): A list of grids, one grid for each time step.
@@ -99,7 +99,24 @@ def run_multiple_simulations_for_percolation(
     flag_neighbors=0,
 ):
     """
-    Runs multiple simulations for a given density and bond probability.
+    Runs multiple simulations for a given density and bond probability and determines whether percolation occurs in each run or not.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        density (float): The initial density of occupied cells in the grid.
+        bond_probability (float): The probability that a bond is open between neighboring cells.
+        steps (int): The number of time steps (iterations) for each simulation.
+        num_simulations (int): The number of simulations to run.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random).
+        flag_neighbors (int, optional): Determines the neighborhood type (1 for Moore, 0 for Von Neumann).
+
+    Returns:
+        dict: A dictionary containing simulation results with the following keys:
+            - "grid_size" (int): The grid size.
+            - "density" (float): The initial density of occupied cells.
+            - "bond_probability" (float): The probability of a bond being open.
+            - "steps" (int): The number of time steps.
+            - "simulation_outcomes" (list): A list of booleans indicating percolation results for each simulation.
     """
     assert isinstance(
         grid_size, int
@@ -162,6 +179,18 @@ def simulate_density(
 ):
     """
     Runs multiple simulations for a given density and bond probability and returns the fraction of simulations with percolation.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        density (float): The density of occupied cells in the grid.
+        bond_probability (float): The probability of a bond being open between neighboring cells.
+        steps (int): The maximum number of simulation steps.
+        num_simulations (int): The number of simulation runs to perform.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random).
+        flag_neighbors (int, optional): Determines the neighborhood type (1 for Moore, 0 for Von Neumann).
+
+    Returns:
+        float: The fraction of simulations that resulted in percolation.
     """
     assert isinstance(
         grid_size, int
@@ -219,6 +248,18 @@ def simulate_and_collect_percolations(
 ):
     """
     Simulates percolation probabilities across a range of densities for a fixed bond probability.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        densities (list of float): A list of density values to simulate.
+        bond_probability (float): The probability of a bond being open.
+        steps (int): The maximum number of simulation steps.
+        num_simulations (int): The number of simulations per density value.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random).
+        flag_neighbors (int, optional): Determines the neighborhood type (1 for Moore, 0 for Von Neumann).
+
+    Returns:
+        list of float: A list of percolation probabilities, one for each density value in `densities`.
     """
     assert isinstance(
         grid_size, int
@@ -414,11 +455,11 @@ def run_multiple_simulations_for_timeplot_status(
         bond_probability (float): The bond probability for a bond to be open.
         steps (int): The number of time steps (iterations) for each simulation.
         num_simulations (int): The number of simulations to run.
-        flag_center (int): The flag to determine the initial spreader placement.
-        flag_neighbors (int): The flag to determine the neighborhood type. If 1, the Moore neighborhood is used. If 0, the Von Neumann neighborhood is used.
+        flag_center (int, optional): The flag to determine the initial spreader placement (1 for center, 0 for outside).
+        flag_neighbors (int, optional): The flag to determine the neighborhood type (1 for Moore, 0 for Von Neumann).
 
     Returns:
-        tuple: A tuple containing four dictionaries, each representing the outcomes for a specific status:
+        tuple of dict: A tuple containing three dictionaries, each representing the outcomes for a specific status:
             results_gossip (dictionary)
             results_clueless (dictionary)
             results_unoccupied (dictionary)

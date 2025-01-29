@@ -240,7 +240,7 @@ class Grid:
         A bond is also added between each pair of occupied cells with probability of being open determined by the `bond probability` attribute.
 
         Parameters:
-            flag_center (int):
+            flag_center (int, optional):
             - If 1, the initial spreader is placed in the central subgrid of the lecture hall
               (approximately a square of size self.size/2 x self.size/2).
             - If 0, the initial spreader is placed near the edges of the lecture hall, outside the central region.
