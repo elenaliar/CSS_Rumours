@@ -220,22 +220,16 @@ class Grid:
             for neighbour in neighbours:
                 m, n = neighbour[0], neighbour[1]
                 if self.lecture_hall[m][n].status == Status.CLUELESS:
-                    if (
-                        (m, n),
-                        (initial_spreader_i, initial_spreader_j),
-                    ) in self.bonds.keys():
-                        self.bonds[
-                            ((initial_spreader_i, initial_spreader_j), (m, n))
-                        ] = self.bonds[
-                            ((m, n), (initial_spreader_i, initial_spreader_j))
-                        ]
-                    else:
-                        self.bonds[
-                            ((initial_spreader_i, initial_spreader_j), (m, n))
-                        ] = random.choices(
-                            [0, 1],
-                            weights=[1 - self.bond_probability, self.bond_probability],
-                        )[0]
+                    probability = random.choices(
+                        [0, 1],
+                        weights=[1 - self.bond_probability, self.bond_probability],
+                    )[0]
+                    self.bonds[((m, n), (initial_spreader_i, initial_spreader_j))] = (
+                        probability
+                    )
+                    self.bonds[((initial_spreader_i, initial_spreader_j), (m, n))] = (
+                        probability
+                    )
 
     def initialize_board(self, flag_center=1, flag_neighbors=0):
         """
