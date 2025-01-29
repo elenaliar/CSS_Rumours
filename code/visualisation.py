@@ -9,8 +9,8 @@ from simulation import (
     run_multiple_simulations_for_phase_diagram,
     simulate_and_collect_percolations,
     simulate_density,
-    aggregate_cluster_distributions,
-    run_multiple_simulations_same_initial_conditions,
+    # aggregate_cluster_distributions,
+    # run_multiple_simulations_same_initial_conditions,
     run_simulation,
 )
 from ca_lecture_hall_model import Colors, Grid
@@ -190,69 +190,63 @@ def aggregate_and_plot_cluster_distributions(
     plt.show()
 
 
-def simulate_and_plot_gossip_model_all_combinations(
-    grid_size, densities, bond_probabilities, num_simulations=100, flag_center=1
-):
-    """
-    Runs multiple simulations for all combinations of densities and bond probabilities,
-    aggregates the results, plots the log-log distributions and the counts of each status over time (iterations).
+# Not used
+# def simulate_and_plot_gossip_model_all_combinations(
+#     grid_size, densities, bond_probabilities, num_simulations=100, flag_center=1
+# ):
+#     """
+#     Runs multiple simulations for all combinations of densities and spread thresholds,
+#     aggregates the results, plots the log-log distributions and the counts of each status over time (iterations).
 
-    Parameters:
-        simulation_function (function): A function that runs the gossip model simulation and returns a cluster size distribution.
-        grid_size (int): The size of the grid for the simulations.
-        densities (list): A list of densities to simulate.
-        bond_probabilities (list): A list of bond probabilities to simulate.
-        num_simulations (int, optional): The number of simulations to run for each set of initial conditions. Defaults to 100.
-        flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
-    """
-    # Store aggregated cluster distributions and labels
-    all_aggregated_distributions = []
-    labels = []
+#     Parameters:
+#         simulation_function (function): A function that runs the gossip model simulation and returns a cluster size distribution.
+#         grid_size (int): The size of the grid for the simulations.
+#         densities (list): A list of densities to simulate.
+#         bond_probabilities (list): A list of spread thresholds to simulate.
+#         num_simulations (int, optional): The number of simulations to run for each set of initial conditions. Defaults to 100.
+#         flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
+#     """
+#     # Store aggregated cluster distributions and labels
+#     all_aggregated_distributions = []
+#     labels = []
 
-    # Iterate over all combinations of densities and bond probabilities
-    for density in densities:
-        for bond_probability in bond_probabilities:
-            print(
-                f"Running simulations for Density={density}, Bond Probability={bond_probability}, Grid={grid_size}x{grid_size}"
-            )
+#     # Iterate over all combinations of densities and spread thresholds
+#     for density in densities:
+#         for bond_probability in bond_probabilities:
+#             print(
+#                 f"Running simulations for Density={density}, Bond Probability={bond_probability}, Grid={grid_size}x{grid_size}"
+#             )
 
-            # Run multiple simulations for this parameter set
-            cluster_distributions = []
-            (
-                cluster_distribution,
-                results_gossip,
-                results_clueless,
-                results_unoccupied,
-            ) = run_multiple_simulations_same_initial_conditions(
-                num_simulations,
-                grid_size,
-                density,
-                bond_probability,
-                flag_center=flag_center,
-            )
+#             # Run multiple simulations for this parameter set
+#             cluster_distributions = []
+#             (
+#                 cluster_distribution,
+#                 results_gossip,
+#                 results_clueless,
+#                 results_unoccupied,
+#             ) = run_multiple_simulations_same_initial_conditions(
+#                 num_simulations,
+#                 grid_size,
+#                 density,
+#                 bond_probability,
+#                 flag_center=flag_center,
+#             )
 
-            cluster_distributions.append(cluster_distribution)
+#             cluster_distributions.append(cluster_distribution)
 
-            # plot_time_status(
-            #     results_gossip,
-            #     results_clueless,
-            #     results_unoccupied,
-            #     num_simulations,
-            # )
+#             # Aggregate the cluster size distributions
+#             aggregated_distribution = aggregate_cluster_distributions(
+#                 cluster_distributions
+#             )
+#             all_aggregated_distributions.append(aggregated_distribution)
 
-            # Aggregate the cluster size distributions
-            aggregated_distribution = aggregate_cluster_distributions(
-                cluster_distributions
-            )
-            all_aggregated_distributions.append(aggregated_distribution)
+#             # Create a label for this parameter combination
+#             labels.append(f"Density={density}, Bond Probability={bond_probability}")
 
-            # Create a label for this parameter combination
-            labels.append(f"Density={density}, Bond Probability={bond_probability}")
-
-    # Plot all aggregated distributions on the same log-log graph
-    aggregate_and_plot_cluster_distributions(
-        all_aggregated_distributions, grid_size, labels
-    )
+#     # Plot all aggregated distributions on the same log-log graph
+#     aggregate_and_plot_cluster_distributions(
+#         all_aggregated_distributions, grid_size, labels
+#     )
 
 
 def plot_percolation_results(
