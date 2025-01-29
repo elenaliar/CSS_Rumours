@@ -171,7 +171,7 @@ class Grid:
         self.density = density
         self.bond_probability = bond_probability
 
-    def set_initial_spreader(self, flag_center):
+    def set_initial_spreader(self, flag_center=1, flag_neighbors=0):
         """Sets the initial spreader in the lecture hall grid.
 
         Parameters:
@@ -191,13 +191,6 @@ class Grid:
             end = 3 * (self.size // 4)  # End index for the 10x10 subgrid
             initial_spreader_i = random.randint(start, end - 1)
             initial_spreader_j = random.randint(start, end - 1)
-
-            while (
-                self.lecture_hall[initial_spreader_i][initial_spreader_j].status
-                == Status.UNOCCUPIED
-            ):
-                initial_spreader_i = random.randint(start, end - 1)
-                initial_spreader_j = random.randint(start, end - 1)
         else:
             # Set the spreader outside the central subgrid
             # Randomly choose a row/column outside of the central block
@@ -205,13 +198,8 @@ class Grid:
             initial_spreader_j = random.randint(0, self.size - 1)
 
             # Ensure the spreader is outside the 10x10 region
-            while (
-                (self.size // 4 <= initial_spreader_i < 3 * (self.size // 4))
-                and (self.size // 4 <= initial_spreader_j < 3 * (self.size // 4))
-                and (
-                    self.lecture_hall[initial_spreader_i][initial_spreader_j].status
-                    == Status.UNOCCUPIED
-                )
+            while (self.size // 4 <= initial_spreader_i < 3 * (self.size // 4)) and (
+                self.size // 4 <= initial_spreader_j < 3 * (self.size // 4)
             ):
                 initial_spreader_i = random.randint(0, self.size - 1)
                 initial_spreader_j = random.randint(0, self.size - 1)
@@ -219,6 +207,35 @@ class Grid:
         self.lecture_hall[initial_spreader_i][initial_spreader_j].set_status(
             Status.GOSSIP_SPREADER
         )
+
+        # Add the bonds
+        if (
+            self.lecture_hall[initial_spreader_i][initial_spreader_j].status
+            == Status.UNOCCUPIED
+        ):
+            neighbours = self.get_neighbours(
+                initial_spreader_i, initial_spreader_j, flag_neighbors
+            )
+
+            for neighbour in neighbours:
+                m, n = neighbour[0], neighbour[1]
+                if self.lecture_hall[m][n].status == Status.CLUELESS:
+                    if (
+                        (m, n),
+                        (initial_spreader_i, initial_spreader_j),
+                    ) in self.bonds.keys():
+                        self.bonds[
+                            ((initial_spreader_i, initial_spreader_j), (m, n))
+                        ] = self.bonds[
+                            ((m, n), (initial_spreader_i, initial_spreader_j))
+                        ]
+                    else:
+                        self.bonds[
+                            ((initial_spreader_i, initial_spreader_j), (m, n))
+                        ] = random.choices(
+                            [0, 1],
+                            weights=[1 - self.bond_probability, self.bond_probability],
+                        )[0]
 
     def initialize_board(self, flag_center=1, flag_neighbors=0):
         """
@@ -271,7 +288,7 @@ class Grid:
                         )[0]
 
         # set initial spot, flag=1 for center, 0 for outside
-        self.set_initial_spreader(flag_center)
+        self.set_initial_spreader(flag_center, flag_neighbors)
 
     def set_spreader(self, i, j):
         """

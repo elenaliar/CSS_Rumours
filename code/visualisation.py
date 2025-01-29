@@ -229,6 +229,8 @@ def simulate_and_plot_gossip_model_all_combinations(
                 bond_probability,
                 flag_center=flag_center,
             )
+
+            print("Finished run_multiple_simulations_same_initial_conditions")
             cluster_distributions.append(cluster_distribution)
 
             plot_time_status(
@@ -286,7 +288,7 @@ def plot_percolation_vs_density(
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
     """
-    densities = np.linspace(0, 1, 20)
+    densities = np.linspace(0.1, 1, 20)
     percolations = []
 
     print("Starting simulation for different densities...")
@@ -345,7 +347,7 @@ def plot_percolation_vs_bond_probability(
         percolations,
         marker="o",
         linestyle="-",
-        color="blue",
+        color=Colors.DARK_PINK.value,
         label=f"density = {density:.2f}",
     )
     plt.xlabel("Bond Probability")
@@ -357,7 +359,7 @@ def plot_percolation_vs_bond_probability(
 
 
 def plot_percolation_vs_density_vs_bond_probability(
-    grid_size, steps=1000, num_simulations=100, flag_center=1, flag_neighbors=1
+    grid_size, steps=1000, num_simulations=100, flag_center=1, flag_neighbors=0
 ):
     """
     Runs multiple simulations for 20 different densities and 10 different Bond Probabilitys,
@@ -371,7 +373,7 @@ def plot_percolation_vs_density_vs_bond_probability(
         flag_neighbors (int, optional): The flag to determine the neighborhood type. If 1, use the Moore neighborhood. If 0, use the Von Neumann neighborhood.
     """
     bond_probabilities = np.linspace(0, 1, 10)
-    densities = np.linspace(0, 1, 20)
+    densities = np.linspace(0.1, 1, 20)
 
     plt.figure(figsize=(10, 8))
 
@@ -422,7 +424,7 @@ def plot_3d_percolation_vs_density_and_bond_probability(
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
         flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
     """
-    densities = np.linspace(0, 1, 10)
+    densities = np.linspace(0.1, 1, 10)
     bond_probabilities = np.linspace(0, 1, 10)
 
     percolation_data = []
@@ -470,7 +472,7 @@ def plot_3d_gossip_spreader_counts(
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
     """
     # range of densities and Bond Probabilitys
-    densities = np.linspace(0, 1, 10)
+    densities = np.linspace(0.1, 1, 10)
     bond_probabilities = np.linspace(0, 1, 10)
 
     spreader_counts = np.zeros((len(densities), len(bond_probabilities)))
@@ -522,7 +524,7 @@ def plot_time_status(
     flag_center,
     x_limits,
     y_limits,
-    flag_neighbors=1,
+    flag_neighbors=0,
 ):
     """
     Plots the counts of each status over time (iterations)..

@@ -99,66 +99,18 @@ def calculate_cluster_size_distribution(grids):
               of that size across all grids.
     """
 
-    def dfs_size(grid, visited, i, j):
-        """
-        Performs a Depth-First Search (DFS) to explore a cluster of connected cells in the grid.
-
-        This function recursively visits all connected cells, checking all four neighbors (up, down, left, and right)
-        for connectivity. It will stop when all possible cells in the cluster have been visited.
-
-        Parameters:
-            i (int): The row index of the current cell to start the DFS from.
-            j (int): The column index of the current cell to start the DFS from.
-            target_row (int, optional): The row index we are trying to reach (for vertical percolation).
-            target_col (int, optional): The column index we are trying to reach (for horizontal percolation).
-
-        Returns:
-            int: The size of the cluster of connected cells.
-        """
-        # Check if the current cell is within bounds, is not visited, and is occupied
-        if (
-            i < 0
-            or i >= grid.size
-            or j < 0
-            or j >= grid.size
-            or visited[i][j]
-            or grid.lecture_hall[i][j].get_status() != Status.GOSSIP_SPREADER
-        ):
-            return 0  # Return 0 if the current cell is invalid or already visited
-
-        # Mark this cell as visited
-        visited[i][j] = True
-
-        # Initialize the size of the cluster with this cell
-        cluster_size = 1
-
-        # Explore all four possible neighbors: down, up, right, left
-        cluster_size += dfs_size(grid, visited, i + 1, j)  # Down
-        cluster_size += dfs_size(grid, visited, i - 1, j)  # Up
-        cluster_size += dfs_size(grid, visited, i, j + 1)  # Right
-        cluster_size += dfs_size(grid, visited, i, j - 1)  # Left
-        cluster_size += dfs_size(grid, visited, i + 1, j + 1)  # Down-Right
-        cluster_size += dfs_size(grid, visited, i + 1, j - 1)  # Down-Left
-        cluster_size += dfs_size(grid, visited, i - 1, j + 1)  # Up-Right
-        cluster_size += dfs_size(grid, visited, i - 1, j - 1)  # Up-Left
-
-        return cluster_size
-
     cluster_sizes = []
 
     for grid in grids:
         size = grid.size
-        visited = [[False for _ in range(size)] for _ in range(size)]
+        cluster_size = 0
 
-        # Iterate through the grid to find clusters
         for i in range(size):
             for j in range(size):
-                if not visited[i][j] and (
-                    grid.lecture_hall[i][j].get_status() == Status.GOSSIP_SPREADER
-                ):
-                    cluster_size = dfs_size(grid, visited, i, j)
-                    if cluster_size > 0:
-                        cluster_sizes.append(cluster_size)
+                if grid.lecture_hall[i][j].status == Status.GOSSIP_SPREADER:
+                    cluster_size += 1
+
+        cluster_sizes.append(cluster_size)
 
     # Calculate the size distribution
     cluster_distribution = {}
@@ -195,9 +147,7 @@ def run_multiple_simulations_for_percolation(
         g = Grid(grid_size, density, bond_probability)
         g.initialize_board(flag_center)
         run_simulation(g, steps, flag_neighbors)
-        results["simulation_outcomes"].append(
-            g.check_percolation(flag_neighbors=flag_neighbors)
-        )
+        results["simulation_outcomes"].append(g.check_percolation())
 
     return results
 
@@ -236,11 +186,17 @@ def run_multiple_simulations_same_initial_conditions(
     # run multiple simulations
     for _ in range(num_simulations):
         # create and initialize the grid
+        print("")
         grid = Grid(grid_size, density, bond_probability)
         grid.initialize_board(flag_center)
 
+        print("Grid initialised, going to run_simulation")
+        grid.show_grid()
+
         # run the simulation
         grids = run_simulation(grid, steps=steps)
+
+        print("run_simulation done, going to count_statuses")
 
         status_counts = count_statuses(grids)
         gossip_spreaders = status_counts["GOSSIP_SPREADER"]
@@ -250,10 +206,15 @@ def run_multiple_simulations_same_initial_conditions(
         unoccupied = status_counts["UNOCCUPIED"]
         results_unoccupied["simulation_outcomes"].append(unoccupied)
 
+        print("Finished getting statuses for a simulation")
+
         if grid.check_percolation():
             count_percolation += 1
         # calculate the cluster size distribution for the current grid
         cluster_distribution = calculate_cluster_size_distribution([grid])
+
+        print("Finished getting calculate_cluster_size_distribution")
+
         cluster_distributions.append(cluster_distribution)
 
     print(
