@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 
 
-def run_simulation(grid, steps=1000, flag_neighbors=1):
+def run_simulation(grid, steps=1000, flag_neighbors=0):
     """
     Runs the simulation for a specified number of steps, updating the grid at each iteration.
     Stops simulation if no cell status changes anymore.
@@ -57,7 +57,6 @@ def count_statuses(grids):
     status_counts = {
         "UNOCCUPIED": [],
         "CLUELESS": [],
-        "SECRET_KEEPER": [],
         "GOSSIP_SPREADER": [],
     }
 
@@ -65,7 +64,6 @@ def count_statuses(grids):
         new_counts = {
             "UNOCCUPIED": 0,
             "CLUELESS": 0,
-            "SECRET_KEEPER": 0,
             "GOSSIP_SPREADER": 0,
         }
 
@@ -77,14 +75,11 @@ def count_statuses(grids):
                     new_counts["UNOCCUPIED"] += 1
                 elif cell_status == Status.CLUELESS:
                     new_counts["CLUELESS"] += 1
-                elif cell_status == Status.SECRET_KEEPER:
-                    new_counts["SECRET_KEEPER"] += 1
                 elif cell_status == Status.GOSSIP_SPREADER:
                     new_counts["GOSSIP_SPREADER"] += 1
 
         status_counts["UNOCCUPIED"].append(new_counts["UNOCCUPIED"])
         status_counts["CLUELESS"].append(new_counts["CLUELESS"])
-        status_counts["SECRET_KEEPER"].append(new_counts["SECRET_KEEPER"])
         status_counts["GOSSIP_SPREADER"].append(new_counts["GOSSIP_SPREADER"])
 
     return status_counts
@@ -160,7 +155,6 @@ def calculate_cluster_size_distribution(grids):
             for j in range(size):
                 if not visited[i][j] and (
                     grid.lecture_hall[i][j].get_status() == Status.GOSSIP_SPREADER
-                    or grid.lecture_hall[i][j].get_status() == Status.SECRET_KEEPER
                 ):
                     cluster_size = dfs_size(grid, visited, i, j)
                     if cluster_size > 0:
@@ -178,7 +172,13 @@ def calculate_cluster_size_distribution(grids):
 
 
 def run_multiple_simulations_for_percolation(
-    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1, flag_neighbors=1
+    grid_size,
+    density,
+    spread_threshold,
+    steps,
+    num_simulations,
+    flag_center=1,
+    flag_neighbors=0,
 ):
     """
     Runs multiple simulations for a given density and spread threshold.
@@ -195,7 +195,9 @@ def run_multiple_simulations_for_percolation(
         g = Grid(grid_size, density, spread_threshold)
         g.initialize_board(flag_center)
         run_simulation(g, steps, flag_neighbors)
-        results["simulation_outcomes"].append(g.check_percolation(flag_neighbors=flag_neighbors))
+        results["simulation_outcomes"].append(
+            g.check_percolation(flag_neighbors=flag_neighbors)
+        )
 
     return results
 
@@ -204,7 +206,7 @@ def run_multiple_simulations_same_initial_conditions(
     num_simulations, grid_size, density, spread_threshold, steps=100, flag_center=1
 ):
     """
-    Runs multiple simulations with the same initial conditions (same grid size, density, and spreading threshold), 
+    Runs multiple simulations with the same initial conditions (same grid size, density, and spreading threshold),
     calculates the cluster size distribution for each simulation and records the number of cells in each status over time.
 
     Parameters:
@@ -218,7 +220,6 @@ def run_multiple_simulations_same_initial_conditions(
     Returns:
         tuple: A tuple containing four dictionaries, each representing the outcomes for a specific status:
             results_gossip (dictionary)
-            results_secret (dictionary)
             results_clueless (dictionary)
             results_unoccupied (dictionary)
             list of dict: A list of cluster size distributions (one for each simulation).
@@ -227,10 +228,10 @@ def run_multiple_simulations_same_initial_conditions(
     count_percolation = 0
 
     results_gossip = create_results_dict(grid_size, density, spread_threshold, steps)
-    results_secret = create_results_dict(grid_size, density, spread_threshold, steps)
     results_clueless = create_results_dict(grid_size, density, spread_threshold, steps)
-    results_unoccupied = create_results_dict(grid_size, density, spread_threshold, steps)
-
+    results_unoccupied = create_results_dict(
+        grid_size, density, spread_threshold, steps
+    )
 
     # run multiple simulations
     for _ in range(num_simulations):
@@ -244,13 +245,10 @@ def run_multiple_simulations_same_initial_conditions(
         status_counts = count_statuses(grids)
         gossip_spreaders = status_counts["GOSSIP_SPREADER"]
         results_gossip["simulation_outcomes"].append(gossip_spreaders)
-        secret_keepers = status_counts["SECRET_KEEPER"]
-        results_secret["simulation_outcomes"].append(secret_keepers)
         clueless = status_counts["CLUELESS"]
         results_clueless["simulation_outcomes"].append(clueless)
         unoccupied = status_counts["UNOCCUPIED"]
         results_unoccupied["simulation_outcomes"].append(unoccupied)
-
 
         if grid.check_percolation():
             count_percolation += 1
@@ -262,7 +260,7 @@ def run_multiple_simulations_same_initial_conditions(
         f"Percolation occured in {count_percolation} out of {num_simulations} simulations for density={density}, spread_threshold={spread_threshold}"
     )
     # return the list of cluster distributions from all simulations
-    return cluster_distributions, results_gossip, results_secret, results_clueless, results_unoccupied
+    return cluster_distributions, results_gossip, results_clueless, results_unoccupied
 
 
 def aggregate_cluster_distributions(cluster_distributions):
@@ -296,17 +294,33 @@ def aggregate_cluster_distributions(cluster_distributions):
     return aggregated_distribution
 
 
-def simulate_density(grid_size, density, spread_threshold, steps, num_simulations, flag_center=1, flag_neighbors=1):
+def simulate_density(
+    grid_size,
+    density,
+    spread_threshold,
+    steps,
+    num_simulations,
+    flag_center=1,
+    flag_neighbors=0,
+):
     """
     Simulates a single density and spread threshold and returns the fraction of simulations with percolation.
     """
     results = run_multiple_simulations_for_percolation(
-        grid_size, density, spread_threshold, steps, num_simulations, flag_center, flag_neighbors
+        grid_size,
+        density,
+        spread_threshold,
+        steps,
+        num_simulations,
+        flag_center,
+        flag_neighbors,
     )
     return sum(results["simulation_outcomes"]) / num_simulations
 
 
-def simulate_density_vs_threshold(grid_size, density, steps, num_simulations, flag_center=1):
+def simulate_density_vs_threshold(
+    grid_size, density, steps, num_simulations, flag_center=1
+):
     """
     Simulates different spread thresholds for a fixed density and returns percolation probabilities.
     """
@@ -315,14 +329,22 @@ def simulate_density_vs_threshold(grid_size, density, steps, num_simulations, fl
 
     for threshold in tqdm(thresholds, desc="Simulating thresholds"):
         percolations.append(
-            simulate_density(grid_size, density, threshold, steps, num_simulations, flag_center)
+            simulate_density(
+                grid_size, density, threshold, steps, num_simulations, flag_center
+            )
         )
 
     return thresholds, percolations
 
 
 def simulate_and_collect_percolations(
-    grid_size, densities, spread_threshold, steps, num_simulations, flag_center=1, flag_neighbors=1
+    grid_size,
+    densities,
+    spread_threshold,
+    steps,
+    num_simulations,
+    flag_center=1,
+    flag_neighbors=0,
 ):
     """
     Simulates percolation probabilities across a range of densities for a fixed spread threshold.
@@ -330,7 +352,15 @@ def simulate_and_collect_percolations(
     percolations = []
     for d in densities:
         percolations.append(
-            simulate_density(grid_size, d, spread_threshold, steps, num_simulations, flag_center, flag_neighbors)
+            simulate_density(
+                grid_size,
+                d,
+                spread_threshold,
+                steps,
+                num_simulations,
+                flag_center,
+                flag_neighbors,
+            )
         )
     return percolations
 
@@ -408,7 +438,13 @@ def create_results_dict(grid_size, density, spread_threshold, steps):
 
 
 def run_multiple_simulations_for_timeplot_status(
-    grid_size, density, spread_threshold, steps, num_simulations, flag_center=1, flag_neighbors=1
+    grid_size,
+    density,
+    spread_threshold,
+    steps,
+    num_simulations,
+    flag_center=1,
+    flag_neighbors=0,
 ):
     """
     Runs multiple simulations of the grid model and records the number of cells in each status over time.
@@ -425,15 +461,15 @@ def run_multiple_simulations_for_timeplot_status(
     Returns:
         tuple: A tuple containing four dictionaries, each representing the outcomes for a specific status:
             results_gossip (dictionary)
-            results_secret (dictionary)
             results_clueless (dictionary)
             results_unoccupied (dictionary)
     """
 
     results_gossip = create_results_dict(grid_size, density, spread_threshold, steps)
-    results_secret = create_results_dict(grid_size, density, spread_threshold, steps)
     results_clueless = create_results_dict(grid_size, density, spread_threshold, steps)
-    results_unoccupied = create_results_dict(grid_size, density, spread_threshold, steps)
+    results_unoccupied = create_results_dict(
+        grid_size, density, spread_threshold, steps
+    )
 
     for i in range(num_simulations):
         g = Grid(grid_size, density, spread_threshold)
@@ -445,24 +481,20 @@ def run_multiple_simulations_for_timeplot_status(
         actual_steps = len(status_counts["GOSSIP_SPREADER"])
 
         gossip_spreaders = status_counts["GOSSIP_SPREADER"]
-        secret_keepers = status_counts["SECRET_KEEPER"]
         clueless = status_counts["CLUELESS"]
         unoccupied = status_counts["UNOCCUPIED"]
 
         if actual_steps < steps:
             last_gossip = gossip_spreaders[-1]
-            last_secret = secret_keepers[-1]
             last_clueless = clueless[-1]
             last_unoccupied = unoccupied[-1]
 
             gossip_spreaders.extend([last_gossip] * (steps - actual_steps))
-            secret_keepers.extend([last_secret] * (steps - actual_steps))
             clueless.extend([last_clueless] * (steps - actual_steps))
             unoccupied.extend([last_unoccupied] * (steps - actual_steps))
 
         results_gossip["simulation_outcomes"].append(gossip_spreaders)
-        results_secret["simulation_outcomes"].append(secret_keepers)
         results_clueless["simulation_outcomes"].append(clueless)
         results_unoccupied["simulation_outcomes"].append(unoccupied)
 
-    return results_gossip, results_secret, results_clueless, results_unoccupied
+    return results_gossip, results_clueless, results_unoccupied
