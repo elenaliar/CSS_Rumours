@@ -302,7 +302,7 @@ def simulate_and_collect_percolations(
     """
     percolations = []
     for d in densities:
-        if 0.4 <= density <= 0.7:
+        if 0.4 <= d <= 0.7:
             percolations.append(
                 simulate_density(
                     grid_size,
