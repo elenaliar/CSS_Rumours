@@ -533,7 +533,7 @@ class Grid:
         print(f"GIF saved to: {gif_path}")
         print(f"All frames saved to: {images_dir}")
 
-    def check_percolation(self, flag_neighbors=0):
+    def check_percolation(self):
         percolation_vertical = 0
         percolation_horizonatl = 0
 
