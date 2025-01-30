@@ -226,7 +226,7 @@ class Grid:
                     self.bonds[((initial_spreader_i, initial_spreader_j), (m, n))] = (
                         probability
                     )
-        
+
         self.lecture_hall[initial_spreader_i][initial_spreader_j].set_status(
             Status.GOSSIP_SPREADER
         )
@@ -361,7 +361,7 @@ class Grid:
 
         The grid is updated by making a deep copy of the current state, ensuring that changes do not affect the current iteration and all
         cells are changed at the same time.
-        paremeters:
+        parameters:
             flag_neighbors (int): The flag to determine the type of neighbors to include. If 1, implement Moore neighborhood, if 0, implement Von Neumann neighborhood
         """
         new_lecture_hall = copy.deepcopy(self.lecture_hall)
@@ -535,7 +535,7 @@ class Grid:
 
     def check_percolation(self):
         percolation_vertical = 0
-        percolation_horizonatl = 0
+        percolation_horizontal = 0
 
         # First row
         first_row = [cell.status for cell in self.lecture_hall[0]]
@@ -550,11 +550,11 @@ class Grid:
         # First column
         first_col = [self.lecture_hall[row][0].status for row in range(self.size)]
         if Status.GOSSIP_SPREADER in first_col:
-            percolation_horizonatl += 1
+            percolation_horizontal += 1
 
         # Last column
         last_col = [self.lecture_hall[row][-1].status for row in range(self.size)]
         if Status.GOSSIP_SPREADER in last_col:
-            percolation_horizonatl += 1
+            percolation_horizontal += 1
 
-        return percolation_vertical == 2 or percolation_horizonatl == 2
+        return percolation_vertical == 2 or percolation_horizontal == 2

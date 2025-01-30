@@ -94,13 +94,13 @@ def simulate_and_create_video(
     animation_name="gossip_spread_simulation.mp4",
 ):
     """
-    Runs one simulation for given grid size, density and spread threshold and
+    Runs one simulation for given grid size, density and bond probability and
     visualises the spread of a gossip over time as an animated grid outlining the central region.
 
     Parameters:
         grid_size (int): The size of the grid for the simulations.
         density (float): A density value to use for the simulations.
-        bond_probability (float): A spread threshold value to use for the simulations.
+        bond_probability (float): A bond probability value to use for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         flag_center (int, optional): Flag to determine the position of initial spreader. 1 for central area, 0 for edges. Defaults to 1.
         save_animation (bool, optional): Whether to save the animation as an MP4 file. Default is False.
@@ -124,7 +124,7 @@ def plot_log_log_distribution(cluster_distribution, density, bond_probability, c
         cluster_distribution (dict): A dictionary where keys are cluster sizes and values
                                      are the frequencies of those sizes.
         density (float): The density used in the simulation.
-        bond_probability (float): The spread threshold used in the simulation.
+        bond_probability (float): The bond probability used in the simulation.
         color (str): The color for plotting the curve.
     """
     # get the data for the log-log plot
@@ -194,14 +194,14 @@ def simulate_and_plot_gossip_model_all_combinations(
     grid_size, densities, bond_probabilities, num_simulations=100, flag_center=1
 ):
     """
-    Runs multiple simulations for all combinations of densities and spread thresholds,
+    Runs multiple simulations for all combinations of densities and bond probabilities,
     aggregates the results, plots the log-log distributions and the counts of each status over time (iterations).
 
     Parameters:
         simulation_function (function): A function that runs the gossip model simulation and returns a cluster size distribution.
         grid_size (int): The size of the grid for the simulations.
         densities (list): A list of densities to simulate.
-        bond_probabilities (list): A list of spread thresholds to simulate.
+        bond_probabilities (list): A list of bond probabilities to simulate.
         num_simulations (int, optional): The number of simulations to run for each set of initial conditions. Defaults to 100.
         flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
     """
@@ -209,7 +209,7 @@ def simulate_and_plot_gossip_model_all_combinations(
     all_aggregated_distributions = []
     labels = []
 
-    # Iterate over all combinations of densities and spread thresholds
+    # Iterate over all combinations of densities and bond probabilities
     for density in densities:
         for bond_probability in bond_probabilities:
             print(
@@ -263,7 +263,7 @@ def plot_percolation_results(
     color=Colors.DARK_PINK.value,
 ):
     """
-    Plots percolation results for different densities or spread thresholds.
+    Plots percolation results for different densities or bond probabilities.
     """
     label = label or (
         f"bond_probability = {bond_probability:.2f}"
@@ -286,12 +286,12 @@ def plot_percolation_vs_density(
     filename="percolation_density.png",
 ):
     """
-    Runs multiple simulations for 20 different densities and a given spread thresholds,
+    Runs multiple simulations for 20 different densities and a given bond probabilities,
     calculates the probability of a percolation occuring, and plots it.
 
     Parameters:
         grid_size (int): The size of the grid for the simulations.
-        bond_probability (float): A spread threshold value to use for the simulations.
+        bond_probability (float): A bond probability value to use for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
     """
@@ -448,7 +448,7 @@ def plot_percolation_vs_density_vs_bond_probability(
 
     colors = [pink_colormap(i) for i in range(len(bond_probabilities))]
 
-    print("Starting simulation for different spread thresholds and densities...")
+    print("Starting simulation for different bond probabilities and densities...")
 
     for i, bond_probability in tqdm(
         enumerate(bond_probabilities),
