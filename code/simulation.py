@@ -44,14 +44,11 @@ def run_simulation(grid, steps=1000, flag_neighbors=0):
 def count_statuses(grids):
     """
     Iterates through all the grids and for each grid calculates the number of cells of each status.
-    Iterates through all the grids and for each grid calculates the number of cells of each status.
 
     Parameters:
         grids (list of Grid): List of grids.
-        grids (list of Grid): List of grids.
 
     Returns:
-        (dict of list): A dictionary containing lists with status counts, one list for each status and one entry for each grid.
         (dict of list): A dictionary containing lists with status counts, one list for each status and one entry for each grid.
     """
     status_counts = {
@@ -92,7 +89,6 @@ def calculate_cluster_size_distribution(grids):
 
     Parameters:
         grids (list of Grid): A list of Grid objects from different simulations.
-        target_status (Status): The status of the cells to include in the cluster size calculation.
 
     Returns:
         dict: A dictionary where keys are cluster sizes and values are the total number of clusters
@@ -133,7 +129,7 @@ def run_multiple_simulations_for_percolation(
     flag_neighbors=0,
 ):
     """
-    Runs multiple simulations for a given density and spread threshold.
+    Runs multiple simulations for a given density and bond probability.
     """
     results = {
         "grid_size": grid_size,
@@ -156,7 +152,7 @@ def run_multiple_simulations_same_initial_conditions(
     num_simulations, grid_size, density, bond_probability, steps=100, flag_center=1
 ):
     """
-    Runs multiple simulations with the same initial conditions (same grid size, density, and spreading threshold),
+    Runs multiple simulations with the same initial conditions (same grid size, density, and bond probability),
     calculates the cluster size distribution for each simulation and records the number of cells in each status over time.
 
     Parameters:
@@ -255,7 +251,7 @@ def simulate_density(
     flag_neighbors=0,
 ):
     """
-    Simulates a single density and spread threshold and returns the fraction of simulations with percolation.
+    Simulates a single density and bond probability and returns the fraction of simulations with percolation.
     """
     results = run_multiple_simulations_for_percolation(
         grid_size,
@@ -298,11 +294,11 @@ def simulate_and_collect_percolations(
     flag_neighbors=0,
 ):
     """
-    Simulates percolation probabilities across a range of densities for a fixed spread threshold.
+    Simulates percolation probabilities across a range of densities for a fixed bond probability.
     """
     percolations = []
     for d in densities:
-        if 0.4 <= density <= 0.7:
+        if 0.4 <= d <= 0.7:
             percolations.append(
                 simulate_density(
                     grid_size,
@@ -331,16 +327,22 @@ def simulate_and_collect_percolations(
 
 
 def run_multiple_simulations_for_phase_diagram(
-    grid_size, density, bond_probability, steps, num_simulations, flag_center=1, flag_neighbors=0
+    grid_size,
+    density,
+    bond_probability,
+    steps,
+    num_simulations,
+    flag_center=1,
+    flag_neighbors=0,
 ):
     """
-    Runs multiple simulations for a given density and spread threshold and for each simulation returns
+    Runs multiple simulations for a given density and bond probability and for each simulation returns
     the number of gossip spreaders at the end of the simulation.
 
     Parameters:
         grid_size (int): The size of the grid for the simulations.
         density (float): A density value to use for the simulations.
-        bond_probability (float): A spread threshold value to use for the simulations.
+        bond_probability (float): A bond probaility value to use for the simulations.
         steps (int, optional): The max number of time steps for each simulation.
         num_simulations (int, optional): The number of simulations to run for each density.
 
