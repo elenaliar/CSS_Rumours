@@ -585,7 +585,6 @@ class Grid:
         """
         percolation_vertical = 0
         percolation_horizontal = 0
-        percolation_horizontal = 0
 
         # First row
         first_row = [cell.status for cell in self.lecture_hall[0]]
@@ -600,7 +599,6 @@ class Grid:
         # First column
         first_col = [self.lecture_hall[row][0].status for row in range(self.size)]
         if Status.GOSSIP_SPREADER in first_col:
-            percolation_horizontal += 1
             percolation_horizontal += 1
 
         # Last column

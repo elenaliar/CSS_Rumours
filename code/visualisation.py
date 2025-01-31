@@ -96,13 +96,11 @@ def simulate_and_create_video(
 ):
     """
     Runs one simulation for given grid size, density and bond probability and
-    Runs one simulation for given grid size, density and bond probability and
     visualises the spread of a gossip over time as an animated grid outlining the central region.
 
     Parameters:
         grid_size (int): The size of the grid for the simulations.
         density (float): A density value to use for the simulations.
-        bond_probability (float): A bond probability value to use for the simulations.
         bond_probability (float): A bond probability value to use for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random). Defaults to 1.
@@ -128,7 +126,6 @@ def plot_percolation_results(
     color=Colors.DARK_PINK.value,
 ):
     """
-    Plots percolation results for different densities or bond probabilities.
     Plots percolation results for different densities or bond probabilities.
     """
     label = label or (
@@ -157,7 +154,6 @@ def plot_percolation_vs_density(
 
     Parameters:
         grid_size (int): The size of the grid for the simulations.
-        bond_probability (float): A bond probability value to use for the simulations.
         bond_probability (float): A bond probability value to use for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
@@ -325,7 +321,7 @@ def plot_percolation_vs_density_vs_bond_probability(
 
     colors = [pink_colormap(i) for i in range(len(bond_probabilities))]
 
-    print("Starting simulation for different bond probabilite and densities...")
+    print("Starting simulation for different bond probabilities and densities...")
 
     for i, bond_probability in tqdm(
         enumerate(bond_probabilities),
