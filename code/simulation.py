@@ -1,8 +1,6 @@
 import copy
 
 from ca_lecture_hall_model import Grid, Status
-import numpy as np
-from tqdm import tqdm
 
 
 def run_simulation(grid, steps=1000, flag_neighbors=0):
@@ -13,25 +11,29 @@ def run_simulation(grid, steps=1000, flag_neighbors=0):
     Parameters:
         grid (Grid): The initial grid to run the simulation on
         steps (int): The number of steps to simulate.
-        flag_neighborhood (int): The flag to determine the neighborhood type.If 1, the Moore neighborhood is used. If 0, the Von Neumann neighborhood is used.
+        flag_neighbors (int): The flag to determine the neighborhood type (1 for Moore, 0 for Von Neumann).
 
     Returns:
         (list): A list of grids, one grid for each time step.
     """
     assert isinstance(steps, int), f"steps must be an integer, got {type(steps)}"
     assert steps > 0, f"steps must be greater than 0, got {steps}"
+    assert flag_neighbors in [
+        0,
+        1,
+    ], f"flag_neighbors must be either 0 or 1, got {flag_neighbors}"
 
     all_grids = [copy.deepcopy(grid)]
 
     prev_grid = copy.deepcopy(grid.lecture_hall)
 
-    for step in range(steps):
-        # update the grid
+    for _ in range(steps):
+        # Update the grid
         grid.update_grid(flag_neighbors)
 
         current_grid = copy.deepcopy(grid.lecture_hall)
 
-        # check if any changes happened or not
+        # Check if any changes happened or not
         if prev_grid == current_grid:
             break
 
@@ -51,6 +53,11 @@ def count_statuses(grids):
     Returns:
         (dict of list): A dictionary containing lists with status counts, one list for each status and one entry for each grid.
     """
+    assert isinstance(grids, list), f"grids must be a list, got {type(grids)}"
+    assert isinstance(
+        grids[0], Grid
+    ), f"Each element in grids must be a Grid, got {type(grids[0])}"
+
     status_counts = {
         "UNOCCUPIED": [],
         "CLUELESS": [],
@@ -64,7 +71,7 @@ def count_statuses(grids):
             "GOSSIP_SPREADER": 0,
         }
 
-        # count statuses
+        # Count statuses
         for i in range(grid.size):
             for j in range(grid.size):
                 cell_status = grid.lecture_hall[i][j].get_status()
@@ -82,43 +89,6 @@ def count_statuses(grids):
     return status_counts
 
 
-def calculate_cluster_size_distribution(grids):
-    """
-    Calculates the size distribution of connected clusters of cells with the specified status
-    across multiple simulation grids (Grid objects).
-
-    Parameters:
-        grids (list of Grid): A list of Grid objects from different simulations.
-
-    Returns:
-        dict: A dictionary where keys are cluster sizes and values are the total number of clusters
-              of that size across all grids.
-    """
-
-    cluster_sizes = []
-
-    for grid in grids:
-        size = grid.size
-        cluster_size = 0
-
-        for i in range(size):
-            for j in range(size):
-                if grid.lecture_hall[i][j].status == Status.GOSSIP_SPREADER:
-                    cluster_size += 1
-
-        cluster_sizes.append(cluster_size)
-
-    # Calculate the size distribution
-    cluster_distribution = {}
-    for size in cluster_sizes:
-        if size in cluster_distribution:
-            cluster_distribution[size] += 1
-        else:
-            cluster_distribution[size] = 1
-
-    return cluster_distribution
-
-
 def run_multiple_simulations_for_percolation(
     grid_size,
     density,
@@ -129,8 +99,58 @@ def run_multiple_simulations_for_percolation(
     flag_neighbors=0,
 ):
     """
-    Runs multiple simulations for a given density and bond probability.
+    Runs multiple simulations for a given density and bond probability and determines whether percolation occurs in each run or not.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        density (float): The initial density of occupied cells in the grid.
+        bond_probability (float): The probability that a bond is open between neighboring cells.
+        steps (int): The number of time steps (iterations) for each simulation.
+        num_simulations (int): The number of simulations to run.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random).
+        flag_neighbors (int, optional): Determines the neighborhood type (1 for Moore, 0 for Von Neumann).
+
+    Returns:
+        dict: A dictionary containing simulation results with the following keys:
+            - "grid_size" (int): The grid size.
+            - "density" (float): The initial density of occupied cells.
+            - "bond_probability" (float): The probability of a bond being open.
+            - "steps" (int): The number of time steps.
+            - "simulation_outcomes" (list): A list of booleans indicating percolation results for each simulation.
     """
+    assert isinstance(
+        grid_size, int
+    ), f"grid_size must be an integer, got {type(grid_size)}"
+    assert grid_size > 0, f"grid_size must be greater than 0, got {grid_size}"
+    assert isinstance(
+        density, (int, float)
+    ), f"density must be a number, got {type(density)}"
+    assert (
+        0 <= density <= 1
+    ), f"density must be between 0 and 1 (inclusive), got {density}"
+    assert isinstance(
+        bond_probability, (int, float)
+    ), f"bond_probability must be a number, got {type(bond_probability)}"
+    assert (
+        0 <= bond_probability <= 1
+    ), f"bond_probability must be between 0 and 1 (inclusive), got {bond_probability}"
+    assert isinstance(steps, int), f"steps must be an integer, got {type(steps)}"
+    assert steps > 0, f"steps must be greater than 0, got {steps}"
+    assert isinstance(
+        num_simulations, int
+    ), f"num_simulations must be an integer, got {type(num_simulations)}"
+    assert (
+        num_simulations > 0
+    ), f"num_simulations must be greater than 0, got {num_simulations}"
+    assert flag_center in [
+        0,
+        1,
+    ], f"flag_center must be either 0 or 1, got {flag_center}"
+    assert flag_neighbors in [
+        0,
+        1,
+    ], f"flag_neighbors must be either 0 or 1, got {flag_neighbors}"
+
     results = {
         "grid_size": grid_size,
         "density": density,
@@ -148,99 +168,6 @@ def run_multiple_simulations_for_percolation(
     return results
 
 
-def run_multiple_simulations_same_initial_conditions(
-    num_simulations, grid_size, density, bond_probability, steps=100, flag_center=1
-):
-    """
-    Runs multiple simulations with the same initial conditions (same grid size, density, and bond probability),
-    calculates the cluster size distribution for each simulation and records the number of cells in each status over time.
-
-    Parameters:
-        num_simulations (int): The number of simulations to run.
-        grid_size (int): The size of the grid (e.g., number of rows and columns).
-        density (float): The fraction of cells initially occupied.
-        bond_probability (float): The threshold probability for a cell to become a gossip spreader.
-        steps(int): The number of steps for each simulation.
-        flag_center (int): The flag to determine the initial spreader placement.
-
-    Returns:
-        tuple: A tuple containing four dictionaries, each representing the outcomes for a specific status:
-            results_gossip (dictionary)
-            results_clueless (dictionary)
-            results_unoccupied (dictionary)
-            list of dict: A list of cluster size distributions (one for each simulation).
-    """
-    cluster_distributions = []
-    count_percolation = 0
-
-    results_gossip = create_results_dict(grid_size, density, bond_probability, steps)
-    results_clueless = create_results_dict(grid_size, density, bond_probability, steps)
-    results_unoccupied = create_results_dict(
-        grid_size, density, bond_probability, steps
-    )
-
-    # run multiple simulations
-    for _ in range(num_simulations):
-        # create and initialize the grid
-        grid = Grid(grid_size, density, bond_probability)
-        grid.initialize_board(flag_center)
-
-        # run the simulation
-        grids = run_simulation(grid, steps=steps)
-
-        status_counts = count_statuses(grids)
-        gossip_spreaders = status_counts["GOSSIP_SPREADER"]
-        results_gossip["simulation_outcomes"].append(gossip_spreaders)
-        clueless = status_counts["CLUELESS"]
-        results_clueless["simulation_outcomes"].append(clueless)
-        unoccupied = status_counts["UNOCCUPIED"]
-        results_unoccupied["simulation_outcomes"].append(unoccupied)
-
-        if grid.check_percolation():
-            count_percolation += 1
-        # calculate the cluster size distribution for the current grid
-        cluster_distribution = calculate_cluster_size_distribution([grid])
-
-        cluster_distributions.append(cluster_distribution)
-
-    print(
-        f"Percolation occured in {count_percolation} out of {num_simulations} simulations for density={density}, bond_probability={bond_probability}"
-    )
-    # return the list of cluster distributions from all simulations
-    return cluster_distributions, results_gossip, results_clueless, results_unoccupied
-
-
-def aggregate_cluster_distributions(cluster_distributions):
-    """
-    Aggregates multiple cluster size distributions into a single distribution.
-
-    Parameters:
-        cluster_distributions (list of dict): A list of list of dictionaries where each dictionary
-                                              represents a cluster size distribution.
-                                              Keys are cluster sizes (int), and values are
-                                              their corresponding frequencies (int).
-
-    Returns:
-        dict: A single aggregated cluster size distribution. Keys are cluster sizes (int),
-              and values are the total frequencies (int) across all input distributions.
-    """
-    aggregated_distribution = {}
-    # turn the list of list of dictionaries into a flat list of dictionaries
-    flat_distributions = [
-        distribution
-        for sublist in cluster_distributions
-        if isinstance(sublist, list)
-        for distribution in sublist
-    ]
-    for distribution in flat_distributions:
-        for size, count in distribution.items():
-            if size in aggregated_distribution:
-                aggregated_distribution[size] += count
-            else:
-                aggregated_distribution[size] = count
-    return aggregated_distribution
-
-
 def simulate_density(
     grid_size,
     density,
@@ -251,8 +178,53 @@ def simulate_density(
     flag_neighbors=0,
 ):
     """
-    Simulates a single density and bond probability and returns the fraction of simulations with percolation.
+    Runs multiple simulations for a given density and bond probability and returns the fraction of simulations with percolation.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        density (float): The density of occupied cells in the grid.
+        bond_probability (float): The probability of a bond being open between neighboring cells.
+        steps (int): The maximum number of simulation steps.
+        num_simulations (int): The number of simulation runs to perform.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random).
+        flag_neighbors (int, optional): Determines the neighborhood type (1 for Moore, 0 for Von Neumann).
+
+    Returns:
+        float: The fraction of simulations that resulted in percolation.
     """
+    assert isinstance(
+        grid_size, int
+    ), f"grid_size must be an integer, got {type(grid_size)}"
+    assert grid_size > 0, f"grid_size must be greater than 0, got {grid_size}"
+    assert isinstance(
+        density, (int, float)
+    ), f"density must be a number, got {type(density)}"
+    assert (
+        0 <= density <= 1
+    ), f"density must be between 0 and 1 (inclusive), got {density}"
+    assert isinstance(
+        bond_probability, (int, float)
+    ), f"bond_probability must be a number, got {type(bond_probability)}"
+    assert (
+        0 <= bond_probability <= 1
+    ), f"bond_probability must be between 0 and 1 (inclusive), got {bond_probability}"
+    assert isinstance(steps, int), f"steps must be an integer, got {type(steps)}"
+    assert steps > 0, f"steps must be greater than 0, got {steps}"
+    assert isinstance(
+        num_simulations, int
+    ), f"num_simulations must be an integer, got {type(num_simulations)}"
+    assert (
+        num_simulations > 0
+    ), f"num_simulations must be greater than 0, got {num_simulations}"
+    assert flag_center in [
+        0,
+        1,
+    ], f"flag_center must be either 0 or 1, got {flag_center}"
+    assert flag_neighbors in [
+        0,
+        1,
+    ], f"flag_neighbors must be either 0 or 1, got {flag_neighbors}"
+
     results = run_multiple_simulations_for_percolation(
         grid_size,
         density,
@@ -263,25 +235,6 @@ def simulate_density(
         flag_neighbors,
     )
     return sum(results["simulation_outcomes"]) / num_simulations
-
-
-def simulate_density_vs_bond_probability(
-    grid_size, density, steps, num_simulations, flag_center=1
-):
-    """
-    Simulates different bond probabilities for a fixed density and returns percolation probabilities.
-    """
-    bond_probabilities = np.linspace(0, 1, 20)
-    percolations = []
-
-    for probability in tqdm(bond_probabilities, desc="Simulating bond probabilities"):
-        percolations.append(
-            simulate_density(
-                grid_size, density, probability, steps, num_simulations, flag_center
-            )
-        )
-
-    return bond_probabilities, percolations
 
 
 def simulate_and_collect_percolations(
@@ -295,9 +248,55 @@ def simulate_and_collect_percolations(
 ):
     """
     Simulates percolation probabilities across a range of densities for a fixed bond probability.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        densities (list of float): A list of density values to simulate.
+        bond_probability (float): The probability of a bond being open.
+        steps (int): The maximum number of simulation steps.
+        num_simulations (int): The number of simulations per density value.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random).
+        flag_neighbors (int, optional): Determines the neighborhood type (1 for Moore, 0 for Von Neumann).
+
+    Returns:
+        list of float: A list of percolation probabilities, one for each density value in `densities`.
     """
+    assert isinstance(
+        grid_size, int
+    ), f"grid_size must be an integer, got {type(grid_size)}"
+    assert grid_size > 0, f"grid_size must be greater than 0, got {grid_size}"
+    assert isinstance(
+        densities, (list)
+    ), f"densities must be a list, got {type(densities)}"
+    assert isinstance(
+        densities[0], (int, float)
+    ), f"The list of densities must contain only numbers, got {type(densities[0])}"
+    assert isinstance(
+        bond_probability, (int, float)
+    ), f"bond_probability must be a number, got {type(bond_probability)}"
+    assert (
+        0 <= bond_probability <= 1
+    ), f"bond_probability must be between 0 and 1 (inclusive), got {bond_probability}"
+    assert isinstance(steps, int), f"steps must be an integer, got {type(steps)}"
+    assert steps > 0, f"steps must be greater than 0, got {steps}"
+    assert isinstance(
+        num_simulations, int
+    ), f"num_simulations must be an integer, got {type(num_simulations)}"
+    assert (
+        num_simulations > 0
+    ), f"num_simulations must be greater than 0, got {num_simulations}"
+    assert flag_center in [
+        0,
+        1,
+    ], f"flag_center must be either 0 or 1, got {flag_center}"
+    assert flag_neighbors in [
+        0,
+        1,
+    ], f"flag_neighbors must be either 0 or 1, got {flag_neighbors}"
+
     percolations = []
     for d in densities:
+        # Run twice as many simulations for densities near critical point
         if 0.4 <= d <= 0.7:
             percolations.append(
                 simulate_density(
@@ -337,12 +336,13 @@ def run_multiple_simulations_for_phase_diagram(
 ):
     """
     Runs multiple simulations for a given density and bond probability and for each simulation returns
+    Runs multiple simulations for a given density and bond probability and for each simulation returns
     the number of gossip spreaders at the end of the simulation.
 
     Parameters:
         grid_size (int): The size of the grid for the simulations.
         density (float): A density value to use for the simulations.
-        bond_probability (float): A bond probaility value to use for the simulations.
+        bond_probability (float): A bond probability value to use for the simulations.
         steps (int, optional): The max number of time steps for each simulation.
         num_simulations (int, optional): The number of simulations to run for each density.
 
@@ -350,10 +350,43 @@ def run_multiple_simulations_for_phase_diagram(
         dict: A dictionary with the following structure:
             grid_size (int): The size of the grid.
             density (float): The initial density of occupied cells in the grid.
-            bond_probability (float): The threshold probability for a cell to spread gossip.
+            bond_probability (float): The bond probability for a bond to be open.
             steps (int): The number of time steps (iterations) for each simulation.
             simulation_outcomes (list): A list containing the total number of gossip spreaders at the end of each simulation.
     """
+    assert isinstance(
+        grid_size, int
+    ), f"grid_size must be an integer, got {type(grid_size)}"
+    assert grid_size > 0, f"grid_size must be greater than 0, got {grid_size}"
+    assert isinstance(
+        density, (int, float)
+    ), f"density must be a number, got {type(density)}"
+    assert (
+        0 <= density <= 1
+    ), f"density must be between 0 and 1 (inclusive), got {density}"
+    assert isinstance(
+        bond_probability, (int, float)
+    ), f"bond_probability must be a number, got {type(bond_probability)}"
+    assert (
+        0 <= bond_probability <= 1
+    ), f"bond_probability must be between 0 and 1 (inclusive), got {bond_probability}"
+    assert isinstance(steps, int), f"steps must be an integer, got {type(steps)}"
+    assert steps > 0, f"steps must be greater than 0, got {steps}"
+    assert isinstance(
+        num_simulations, int
+    ), f"num_simulations must be an integer, got {type(num_simulations)}"
+    assert (
+        num_simulations > 0
+    ), f"num_simulations must be greater than 0, got {num_simulations}"
+    assert flag_center in [
+        0,
+        1,
+    ], f"flag_center must be either 0 or 1, got {flag_center}"
+    assert flag_neighbors in [
+        0,
+        1,
+    ], f"flag_neighbors must be either 0 or 1, got {flag_neighbors}"
+
     results = {
         "grid_size": grid_size,
         "density": density,
@@ -362,7 +395,7 @@ def run_multiple_simulations_for_phase_diagram(
         "simulation_outcomes": [],
     }
 
-    for i in range(num_simulations):
+    for _ in range(num_simulations):
         g = Grid(grid_size, density, bond_probability)
         g.initialize_board(flag_center, flag_neighbors)
 
@@ -370,7 +403,7 @@ def run_multiple_simulations_for_phase_diagram(
 
         status_counts = count_statuses(grids)
 
-        # only the final number of GOSSIP_SPREADERS from status_counts for phase diagram
+        # Only the final number of GOSSIP_SPREADERS from status_counts for phase diagram
         gossip_spreaders = status_counts["GOSSIP_SPREADER"][-1]
         results["simulation_outcomes"].append(gossip_spreaders)
 
@@ -384,14 +417,14 @@ def create_results_dict(grid_size, density, bond_probability, steps):
     Parameters:
         size (int): The size of the grid.
         grid_size (float): The initial density of occupied cells in the grid.
-        bond_probability (float): The threshold probability for a cell to spread gossip.
+        bond_probability (float): The bond probability for a bond to be open.
         steps (int): The number of time steps (iterations) for each simulation.
 
     Returns:
         dict: A dictionary with the following structure:
             grid_size (int): The size of the grid.
             density (float): The initial density of occupied cells in the grid.
-            bond_probability (float): The threshold probability for a cell to spread gossip.
+            bond_probability (float): The bond probability for a bond to be open.
             steps (int): The number of time steps (iterations) for each simulation.
             simulation_outcomes (list): An empty list that will hold simulation outcomes over time.
     """
@@ -419,18 +452,50 @@ def run_multiple_simulations_for_timeplot_status(
     Parameters:
         grid_size (int): The size of the grid.
         density (float): The initial density of occupied cells in the grid.
-        bond_probability (float): The threshold probability for a cell to spread gossip.
+        bond_probability (float): The bond probability for a bond to be open.
         steps (int): The number of time steps (iterations) for each simulation.
         num_simulations (int): The number of simulations to run.
-        flag_center (int): The flag to determine the initial spreader placement.
-        flag_neighbors (int): The flag to determine the neighborhood type. If 1, the Moore neighborhood is used. If 0, the Von Neumann neighborhood is used.
+        flag_center (int, optional): The flag to determine the initial spreader placement (1 for center, 0 for outside).
+        flag_neighbors (int, optional): The flag to determine the neighborhood type (1 for Moore, 0 for Von Neumann).
 
     Returns:
-        tuple: A tuple containing four dictionaries, each representing the outcomes for a specific status:
+        tuple of dict: A tuple containing three dictionaries, each representing the outcomes for a specific status:
             results_gossip (dictionary)
             results_clueless (dictionary)
             results_unoccupied (dictionary)
     """
+    assert isinstance(
+        grid_size, int
+    ), f"grid_size must be an integer, got {type(grid_size)}"
+    assert grid_size > 0, f"grid_size must be greater than 0, got {grid_size}"
+    assert isinstance(
+        density, (int, float)
+    ), f"density must be a number, got {type(density)}"
+    assert (
+        0 <= density <= 1
+    ), f"density must be between 0 and 1 (inclusive), got {density}"
+    assert isinstance(
+        bond_probability, (int, float)
+    ), f"bond_probability must be a number, got {type(bond_probability)}"
+    assert (
+        0 <= bond_probability <= 1
+    ), f"bond_probability must be between 0 and 1 (inclusive), got {bond_probability}"
+    assert isinstance(steps, int), f"steps must be an integer, got {type(steps)}"
+    assert steps > 0, f"steps must be greater than 0, got {steps}"
+    assert isinstance(
+        num_simulations, int
+    ), f"num_simulations must be an integer, got {type(num_simulations)}"
+    assert (
+        num_simulations > 0
+    ), f"num_simulations must be greater than 0, got {num_simulations}"
+    assert flag_center in [
+        0,
+        1,
+    ], f"flag_center must be either 0 or 1, got {flag_center}"
+    assert flag_neighbors in [
+        0,
+        1,
+    ], f"flag_neighbors must be either 0 or 1, got {flag_neighbors}"
 
     results_gossip = create_results_dict(grid_size, density, bond_probability, steps)
     results_clueless = create_results_dict(grid_size, density, bond_probability, steps)
@@ -438,7 +503,7 @@ def run_multiple_simulations_for_timeplot_status(
         grid_size, density, bond_probability, steps
     )
 
-    for i in range(num_simulations):
+    for _ in range(num_simulations):
         g = Grid(grid_size, density, bond_probability)
         g.initialize_board(flag_center, flag_neighbors)
 

@@ -9,14 +9,15 @@ from simulation import (
     run_multiple_simulations_for_phase_diagram,
     simulate_and_collect_percolations,
     simulate_density,
-    aggregate_cluster_distributions,
-    run_multiple_simulations_same_initial_conditions,
     run_simulation,
 )
 from ca_lecture_hall_model import Colors, Grid
 
 
 def get_pink_colormap(N):
+    """
+    Returns a custom colormap from dark to light pink with N shades in between.
+    """
     pink_colormap = LinearSegmentedColormap.from_list(
         "pink_shades",
         [Colors.DARK_PINK.value, Colors.LIGHT_PINK.value],
@@ -102,7 +103,8 @@ def simulate_and_create_video(
         density (float): A density value to use for the simulations.
         bond_probability (float): A bond probability value to use for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
-        flag_center (int, optional): Flag to determine the position of initial spreader. 1 for central area, 0 for edges. Defaults to 1.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random). Defaults to 1.
+        flag_neighbors (int, optional): Determines the neighborhood type (1 for Moore, 0 for Von Neumann). Defaults to 0.
         save_animation (bool, optional): Whether to save the animation as an MP4 file. Default is False.
         animation_name (str, optional): The name of the file to save the animation if `save_animation` is True.
 
@@ -114,145 +116,6 @@ def simulate_and_create_video(
     grids = run_simulation(g, steps, flag_neighbors)
 
     return show_lecture_hall_over_time(grids, save_animation, animation_name)
-
-
-def plot_log_log_distribution(cluster_distribution, density, bond_probability, color):
-    """
-    Plots the log-log graph of cluster size distribution.
-
-    Parameters:
-        cluster_distribution (dict): A dictionary where keys are cluster sizes and values
-                                     are the frequencies of those sizes.
-        density (float): The density used in the simulation.
-        bond_probability (float): The bond probability used in the simulation.
-        color (str): The color for plotting the curve.
-    """
-    # get the data for the log-log plot
-    cluster_sizes = list(cluster_distribution.keys())
-    frequencies = list(cluster_distribution.values())
-
-    # apply logarithmic transformation
-    log_sizes = np.log10(cluster_sizes)
-    log_frequencies = np.log10(frequencies)
-
-    # plot the log-log graph
-    plt.plot(
-        log_sizes,
-        log_frequencies,
-        color=color,
-        label=f"Density={density}, Spread ={bond_probability}",
-        marker=".",
-        linestyle="none",
-    )
-
-
-def aggregate_and_plot_cluster_distributions(
-    aggregated_distributions, grid_size, labels
-):
-    """
-    Plots the log-log graph of multiple aggregated cluster size distributions.
-
-    Parameters:
-        aggregated_distributions (list of dict): A list of aggregated cluster size distributions.
-                                                 Each dictionary represents a cluster size distribution
-                                                 with keys as cluster sizes (int) and values as their
-                                                 corresponding frequencies (int).
-        grid_size (int): The size of the grid used in the simulations.
-        labels (list of str): A list of labels corresponding to each aggregated cluster distribution,
-                              describing the conditions under which the data was generated (e.g.,
-                              "Density=0.3, Threshold=0.2").
-
-    Returns:
-        None: Displays the log-log plot of the cluster size distributions.
-    """
-    plt.figure(figsize=(10, 8))
-
-    # plot each aggregated distribution with its label
-    for distribution, label in zip(aggregated_distributions, labels):
-        cluster_sizes = list(distribution.keys())
-        frequencies = list(distribution.values())
-
-        # log transformation
-        log_sizes = np.log10(cluster_sizes)
-        log_frequencies = np.log10(frequencies)
-
-        plt.plot(log_sizes, log_frequencies, marker=".", linestyle="none", label=label)
-
-    # plot settings
-    plt.title(
-        f"Log-Log Plot of Cluster Size Distributions (Grid={grid_size}x{grid_size})",
-        fontsize=14,
-    )
-    plt.xlabel("Log10(Cluster Size)", fontsize=12)
-    plt.ylabel("Log10(Frequency)", fontsize=12)
-    plt.grid(True)
-    # plt.legend()
-    plt.show()
-
-
-def simulate_and_plot_gossip_model_all_combinations(
-    grid_size, densities, bond_probabilities, num_simulations=100, flag_center=1
-):
-    """
-    Runs multiple simulations for all combinations of densities and bond probabilities,
-    aggregates the results, plots the log-log distributions and the counts of each status over time (iterations).
-
-    Parameters:
-        simulation_function (function): A function that runs the gossip model simulation and returns a cluster size distribution.
-        grid_size (int): The size of the grid for the simulations.
-        densities (list): A list of densities to simulate.
-        bond_probabilities (list): A list of bond probabilities to simulate.
-        num_simulations (int, optional): The number of simulations to run for each set of initial conditions. Defaults to 100.
-        flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
-    """
-    # Store aggregated cluster distributions and labels
-    all_aggregated_distributions = []
-    labels = []
-
-    # Iterate over all combinations of densities and bond probabilities
-    for density in densities:
-        for bond_probability in bond_probabilities:
-            print(
-                f"Running simulations for Density={density}, Bond Probability={bond_probability}, Grid={grid_size}x{grid_size}"
-            )
-
-            # Run multiple simulations for this parameter set
-            cluster_distributions = []
-            (
-                cluster_distribution,
-                results_gossip,
-                results_clueless,
-                results_unoccupied,
-            ) = run_multiple_simulations_same_initial_conditions(
-                num_simulations,
-                grid_size,
-                density,
-                bond_probability,
-                flag_center=flag_center,
-            )
-
-            cluster_distributions.append(cluster_distribution)
-
-            # plot_time_status(
-            #     results_gossip,
-            #     results_clueless,
-            #     results_unoccupied,
-            #     num_simulations,
-            # )
-
-            # Aggregate the cluster size distributions
-            aggregated_distribution = aggregate_cluster_distributions(
-                cluster_distributions
-            )
-            all_aggregated_distributions.append(aggregated_distribution)
-
-            # Create a label for this parameter combination
-            labels.append(f"Density={density}, Bond Probability={bond_probability}")
-
-    # Plot all aggregated distributions on the same log-log graph
-    aggregate_and_plot_cluster_distributions(
-        all_aggregated_distributions, grid_size, labels
-    )
 
 
 def plot_percolation_results(
@@ -286,7 +149,7 @@ def plot_percolation_vs_density(
     filename="percolation_density.png",
 ):
     """
-    Runs multiple simulations for 20 different densities and a given bond probabilities,
+    Runs multiple simulations for 20 different densities and a given bond probability,
     calculates the probability of a percolation occuring, and plots it.
 
     Parameters:
@@ -294,6 +157,10 @@ def plot_percolation_vs_density(
         bond_probability (float): A bond probability value to use for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random). Defaults to 1.
+        flag_neighbors (int, optional): Determines the neighborhood type (1 for Moore, 0 for Von Neumann). Defaults to 0.
+        save (bool, optional):  Whether to save the plot as an png file. Default is False.
+        filename (str, optional): The name of the file to save the plot if `save` is True.
     """
     densities = np.linspace(0.1, 1, 20)
     percolations = []
@@ -361,6 +228,10 @@ def plot_percolation_vs_bond_probability(
         density (float): A density value to use for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random). Defaults to 1.
+        flag_neighbors (int, optional): Determines the neighborhood type (1 for Moore, 0 for Von Neumann). Defaults to 0.
+        save (bool, optional):  Whether to save the plot as an png file. Default is False.
+        filename (str, optional): The name of the file to save the plot if `save` is True.
     """
     bond_probabilities = np.linspace(0.1, 1, 20)
     percolations = []
@@ -435,8 +306,10 @@ def plot_percolation_vs_density_vs_bond_probability(
         grid_size (int): The size of the grid for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
-        flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
-        flag_neighbors (int, optional): The flag to determine the neighborhood type. If 1, use the Moore neighborhood. If 0, use the Von Neumann neighborhood.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random). Defaults to 1.
+        flag_neighbors (int, optional): Determines the neighborhood type (1 for Moore, 0 for Von Neumann). Defaults to 0.
+        save (bool, optional):  Whether to save the plot as an png file. Default is False.
+        filename (str, optional): The name of the file to save the plot if `save` is True.
     """
     bond_probabilities = np.linspace(0.1, 1, 10)
     densities = np.linspace(0.1, 1, 20)
@@ -511,7 +384,9 @@ def plot_3d_percolation_vs_density_and_bond_probability(
         grid_size (int): The size of the grid for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
-        flag_center (int, optional): The flag to determine the initial spreader placement. Defaults to 1.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random). Defaults to 1.
+        save (bool, optional):  Whether to save the plot as an png file. Default is False.
+        filename (str, optional): The name of the file to save the plot if `save` is True.
     """
     densities = np.linspace(0.1, 1, 10)
     bond_probabilities = np.linspace(0.1, 1, 10)
@@ -568,8 +443,11 @@ def plot_3d_gossip_spreader_counts(
         grid_size (int): The size of the grid for the simulations.
         steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
         num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random). Defaults to 1.
+        save (bool, optional):  Whether to save the plot as an png file. Default is False.
+        filename (str, optional): The name of the file to save the plot if `save` is True.
     """
-    # range of densities and Bond Probabilitys
+    # Range of densities and Bond Probabilitys
     densities = np.linspace(0.1, 1, 10)
     bond_probabilities = np.linspace(0.1, 1, 10)
 
@@ -590,9 +468,8 @@ def plot_3d_gossip_spreader_counts(
                 flag_center,
             )
 
-            # average number of GOSSIP_SPREADERS across simulations
+            # Average number of GOSSIP_SPREADERS across simulations
             average_spreaders = np.mean(results["simulation_outcomes"])
-            # print(f"Average GOSSIP_SPREADERS for density={density:.2f}, bond_probability={bond_probability:.2f}: {average_spreaders}\n") # print statements for checking
             spreader_counts[j, i] = average_spreaders  # used for Z
 
     # 3D plot
@@ -623,9 +500,9 @@ def plot_time_status(
     bond_probability,
     steps,
     num_simulations,
-    flag_center,
     x_limits,
     y_limits,
+    flag_center=1,
     flag_neighbors=0,
 ):
     """
@@ -637,10 +514,10 @@ def plot_time_status(
         num_simulations (int): The number of simulations to run.
         density (float): The density of the grid.
         bond_probability (float): The Bond Probability for the gossip model.
-        flag_center (int): Flag to determine the position of initial spreader
         x_limits (tuple): Limits for the x-axis (time).
         y_limits (tuple): Limits for the y-axis (number of cells).
-        flag_neighbors (int): Flag to determine the neighborhood type. If 1, use the Moore neighborhood. If 0, use the Von Neumann neighborhood.
+        flag_center (int, optional): Determines the initial spreader placement (1 for center, 0 for random). Defaults to 1.
+        flag_neighbors (int, optional): Determines the neighborhood type (1 for Moore, 0 for Von Neumann). Defaults to 0.
     """
     results_gossip, results_clueless, results_unoccupied = (
         run_multiple_simulations_for_timeplot_status(
