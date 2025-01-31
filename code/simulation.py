@@ -530,3 +530,58 @@ def run_multiple_simulations_for_timeplot_status(
         results_unoccupied["simulation_outcomes"].append(unoccupied)
 
     return results_gossip, results_clueless, results_unoccupied
+
+
+def simulate_initial_spreader_with_bond_probability(
+    size, density, bond_probability, steps, initial_positions
+):
+    """
+    Simulates the gossip spread model with different initial spreader positions
+    while considering bond percolation probabilities.
+
+    This function initializes the grid, places an initial spreader at different positions,
+    and runs the simulation until percolation occurs or the maximum number of steps is reached.
+    It also ensures that all possible bonds are initialized before updating the grid to prevent errors.
+
+    Parameters:
+        size (int): The size of the grid (number of rows and columns).
+        density (float): The fraction of initially occupied cells.
+        bond_probability (float): The probability of a bond allowing gossip spread.
+        steps (int): The maximum number of simulation steps.
+        initial_positions (list of tuple): A list of (row, col) positions to test as the initial spreader.
+
+    Returns:
+        dict: A dictionary where keys are initial spreader positions (row, col),
+              and values are the number of steps taken for percolation (-1 if no percolation occurred).
+    """
+
+    results = {}
+
+    for position in tqdm(
+        initial_positions, desc="Simulating initial spreader positions"
+    ):
+        grid = Grid(size, density, bond_probability)
+        grid.initialize_board()
+        row, col = position
+        grid.lecture_hall[row][col].set_status(Status.GOSSIP_SPREADER)
+
+        # ✅ FIX: Ensure all bonds exist before running the simulation
+        for i in range(size):
+            for j in range(size):
+                neighbors = grid.get_neighbours(i, j)
+                for m, n in neighbors:
+                    if ((i, j), (m, n)) not in grid.bonds:
+                        grid.bonds[((i, j), (m, n))] = 0  # Default to closed bond
+                    if ((m, n), (i, j)) not in grid.bonds:
+                        grid.bonds[((m, n), (i, j))] = 0  # Ensure bidirectionality
+
+        # Run simulation
+        for step in range(steps):
+            grid.update_grid()
+            if grid.check_percolation():
+                results[position] = step + 1
+                break
+        else:
+            results[position] = -1  # No percolation
+
+    return results
