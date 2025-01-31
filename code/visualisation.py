@@ -711,3 +711,124 @@ def plot_time_status(
     ax.set_xlim(x_limits)
     ax.set_ylim(y_limits)
     ax.grid(True)
+
+
+def plot_spreader_effect(results):
+    """
+    Plots the effect of the initial spreader position on percolation speed.
+
+    Parameters:
+        results (dict): Dictionary with keys as initial spreader positions (row, col) and values as steps to percolation.
+
+    Returns:
+        None: Displays a scatter plot.
+    """
+    positions = list(results.keys())
+    steps = list(results.values())
+
+    x = [pos[1] for pos in positions]
+    y = [pos[0] for pos in positions]
+
+    plt.figure(figsize=(10, 8))
+
+    # Use the same colormap as the 3D plot
+    pink_colormap = get_pink_colormap(len(steps))
+
+    scatter = plt.scatter(x, y, c=steps, cmap=pink_colormap, edgecolor="black", s=100)
+
+    plt.colorbar(scatter, label="Steps to Percolation (-1 means no percolation)")
+    plt.xlabel("Column", fontsize=14)
+    plt.ylabel("Row", fontsize=14)
+    plt.title("Effect of Initial Spreader Position on Percolation Speed", fontsize=16)
+    plt.grid(True, linestyle="--", linewidth=0.5, color=Colors.UNOCCUPIED.value)
+
+    plt.show()
+
+
+def plot_distance_vs_steps(results, size):
+    """
+    Plots the relationship between distance from the center and the number of steps to percolation.
+
+    Parameters:
+        results (dict): Dictionary with keys as initial spreader positions (row, col) and values as steps to percolation.
+        size (int): Size of the grid.
+
+    Returns:
+        None: Displays a line plot.
+    """
+    center = (size // 2, size // 2)
+    distances = []
+    steps = []
+
+    for (row, col), step_count in results.items():
+        distance_to_center = np.sqrt((row - center[0]) ** 2 + (col - center[1]) ** 2)
+        distances.append(distance_to_center)
+        steps.append(step_count)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(
+        distances,
+        steps,
+        "o-",
+        label="Steps to Percolation",
+        color=Colors.GOSSIP_SPREADER.value,  # Fixed color reference
+        markersize=6,
+        markerfacecolor=Colors.CLUELESS_DARK.value,  # Fixed color reference
+    )
+
+    plt.xlabel("Distance from Center", fontsize=14)
+    plt.ylabel("Steps to Percolation", fontsize=14)
+    plt.title("Effect of Distance from Center on Percolation Steps", fontsize=16)
+    plt.legend()
+
+    # Grid color matches the 3D plot theme
+    plt.grid(True, linestyle="--", linewidth=0.5, color=Colors.UNOCCUPIED.value)
+
+    plt.show()
+
+
+def plot_distance_vs_percolation_heatmap(results, size):
+    """
+    Plots the heatmap of average percolation steps against distance from the center.
+
+    Parameters:
+        results (dict): Dictionary with keys as initial spreader positions (row, col) and values as steps to percolation.
+        size (int): Size of the grid.
+
+    Returns:
+        None: Displays a heatmap plot.
+    """
+    center = (size // 2, size // 2)
+    distance_map = {}
+
+    for (row, col), steps in results.items():
+        distance = np.sqrt((row - center[0]) ** 2 + (col - center[1]) ** 2)
+        if steps != -1:  # Ignore cases where percolation didn't happen
+            distance_map.setdefault(distance, []).append(steps)
+
+    avg_steps = {d: np.mean(steps) for d, steps in distance_map.items()}
+
+    distances = list(avg_steps.keys())
+    percolation_steps = list(avg_steps.values())
+
+    plt.figure(figsize=(10, 8))
+
+    # Use the pink colormap to align with the 3D plot
+    pink_colormap = get_pink_colormap(len(percolation_steps))
+
+    plt.scatter(
+        distances,
+        percolation_steps,
+        c=percolation_steps,
+        cmap=pink_colormap,
+        edgecolor="black",
+        s=80,
+    )
+
+    plt.colorbar(label="Average Steps to Percolation")
+    plt.xlabel("Distance from Center", fontsize=14)
+    plt.ylabel("Average Steps to Percolation", fontsize=14)
+    plt.title("Distance from Center vs Average Percolation Steps", fontsize=16)
+    plt.grid(True, linestyle="--", linewidth=0.5, color=Colors.UNOCCUPIED.value)
+
+    plt.show()

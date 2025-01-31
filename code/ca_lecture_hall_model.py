@@ -28,6 +28,7 @@ class Colors(Enum):
     CLUELESS = WHITESMOKE = "#F5F5F5"
     CLUELESS_DARK = DIMGRAY = "#696969"
     GOSSIP_SPREADER = DARK_PINK = "#B03060"
+    LIGHT_PINK = "#FFB6C1"
 
 
 class Cell:
