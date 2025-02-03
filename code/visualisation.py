@@ -209,6 +209,221 @@ def plot_percolation_vs_density(
     plt.show()
 
 
+def plot_percolation_vs_density_both_nbhoods(
+    grid_size,
+    bond_probability,
+    steps=1000,
+    num_simulations=100,
+    flag_center=1,
+    save=False,
+    filename="percolation_density_both_nbhoods.png",
+):
+    """
+    Runs multiple simulations for 20 different densities and a given spread thresholds for both von Neumann and Moore neighbourhood,
+    calculates the probability of a percolation occuring, and plots it.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        bond_probability (float): A spread threshold value to use for the simulations.
+        steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
+        num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+        save (bool, optional):  Whether to save the plot as an png file. Default is False.
+        filename (str, optional): The name of the file to save the plot if `save` is True.
+    """
+    densities = np.linspace(0.1, 1, 20)
+    percolations_vn = []
+    percolations_moore = []
+
+    print("Starting simulation for different densities...")
+
+    for density in tqdm(densities, desc="Simulating densities von Neumann"):
+        if 0.4 <= density <= 0.7:
+            percolations_vn.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations * 2,
+                    flag_center,
+                    flag_neighbors=0,
+                )
+            )
+        else:
+            percolations_vn.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations,
+                    flag_center,
+                    flag_neighbors=0,
+                )
+            )
+
+    for density in tqdm(densities, desc="Simulating densities Moore"):
+        if 0.4 <= density <= 0.7:
+            percolations_moore.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations * 2,
+                    flag_center,
+                    flag_neighbors=1,
+                )
+            )
+        else:
+            percolations_moore.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations,
+                    flag_center,
+                    flag_neighbors=1,
+                )
+            )
+
+    print("Simulations completed.")
+
+    plt.figure(figsize=(8, 6))
+    plot_percolation_results(
+        densities,
+        percolations_vn,
+        bond_probability,
+        label="Von Neumann",
+        color=Colors.DARK_PINK.value,
+    )
+    plot_percolation_results(
+        densities,
+        percolations_moore,
+        bond_probability,
+        label="Moore",
+        color=Colors.LIGHT_PINK.value,
+    )
+    plt.xlabel("Density")
+    plt.ylabel("Fraction of simulations with percolation")
+    plt.title("Plot of percolation occurence for different density")
+    plt.legend()
+    plt.grid(True)
+
+    if save:
+        plt.savefig(filename, dpi=300)
+
+    plt.show()
+
+
+def plot_percolation_vs_density_both_initial(
+    grid_size,
+    bond_probability,
+    steps=1000,
+    num_simulations=100,
+    save=False,
+    filename="percolation_density_both_initial.png",
+):
+    """
+    Runs multiple simulations for 20 different densities and a given spread thresholds for both positions of the initial spreader
+    (center and edge), calculates the probability of a percolation occuring, and plots it.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        bond_probability (float): A spread threshold value to use for the simulations.
+        steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
+        num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+        save (bool, optional):  Whether to save the plot as an png file. Default is False.
+        filename (str, optional): The name of the file to save the plot if `save` is True.
+    """
+    densities = np.linspace(0.1, 1, 20)
+    percolations_centeer = []
+    percolations_edge = []
+
+    print("Starting simulation for different densities...")
+
+    for density in tqdm(densities, desc="Simulating densities von Neumann"):
+        if 0.4 <= density <= 0.7:
+            percolations_centeer.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations * 2,
+                    flag_center=1,
+                    flag_neighbors=0,
+                )
+            )
+        else:
+            percolations_centeer.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations,
+                    flag_center=1,
+                    flag_neighbors=0,
+                )
+            )
+
+    for density in tqdm(densities, desc="Simulating densities Moore"):
+        if 0.4 <= density <= 0.7:
+            percolations_edge.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations * 2,
+                    flag_center=0,
+                    flag_neighbors=0,
+                )
+            )
+        else:
+            percolations_edge.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations,
+                    flag_center=0,
+                    flag_neighbors=0,
+                )
+            )
+
+    print("Simulations completed.")
+
+    plt.figure(figsize=(8, 6))
+    plot_percolation_results(
+        densities,
+        percolations_centeer,
+        bond_probability,
+        label="Center",
+        color=Colors.DARK_PINK.value,
+    )
+    plot_percolation_results(
+        densities,
+        percolations_edge,
+        bond_probability,
+        label="Edge",
+        color=Colors.LIGHT_PINK.value,
+    )
+    plt.xlabel("Density")
+    plt.ylabel("Fraction of simulations with percolation")
+    plt.title("Plot of percolation occurence for different density")
+    plt.legend()
+    plt.grid(True)
+
+    if save:
+        plt.savefig(filename, dpi=300)
+
+    plt.show()
+
+
 def plot_percolation_vs_bond_probability(
     grid_size,
     density,
@@ -276,6 +491,233 @@ def plot_percolation_vs_bond_probability(
         linestyle="-",
         color=Colors.DARK_PINK.value,
         label=f"density = {density:.2f}",
+    )
+    plt.xlabel("Bond Probability")
+    plt.ylabel("Fraction of Simulations with Percolation")
+    plt.title("Plot of Percolation vs Bond Probability")
+    plt.legend()
+    plt.grid(True)
+
+    if save:
+        plt.savefig(filename, dpi=300)
+
+    plt.show()
+
+
+def plot_percolation_vs_bond_probability_both_nbhoods(
+    grid_size,
+    density,
+    steps=1000,
+    num_simulations=100,
+    flag_center=1,
+    save=False,
+    filename="percolation_bond_probability_both_nbhoods.png",
+):
+    """
+    Runs multiple simulations for 20 different Bond Probabilitys and a given density for both von Neumann and Moore neighbourhood,
+    calculates the probability of a percolation occuring, and plots it.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        density (float): A density value to use for the simulations.
+        steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
+        num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+        save (bool, optional):  Whether to save the plot as an png file. Default is False.
+        filename (str, optional): The name of the file to save the plot if `save` is True.
+    """
+    bond_probabilities = np.linspace(0.1, 1, 20)
+    percolations_vn = []
+    percolations_moore = []
+
+    print("Starting simulation for different bond probabilities...")
+
+    for bond_probability in tqdm(
+        bond_probabilities, desc="Simulating bond probabilities Von Neumann"
+    ):
+        if 0.3 <= bond_probability <= 0.8:
+            percolations_vn.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations * 2,
+                    flag_center,
+                    flag_neighbors=0,
+                )
+            )
+        else:
+            percolations_vn.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations,
+                    flag_center,
+                    flag_neighbors=0,
+                )
+            )
+
+    for bond_probability in tqdm(
+        bond_probabilities, desc="Simulating bond probabilities Moore"
+    ):
+        if 0.3 <= bond_probability <= 0.8:
+            percolations_moore.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations * 2,
+                    flag_center,
+                    flag_neighbors=1,
+                )
+            )
+        else:
+            percolations_moore.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations,
+                    flag_center,
+                    flag_neighbors=1,
+                )
+            )
+
+    print("Simulations completed.")
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(
+        bond_probabilities,
+        percolations_vn,
+        marker="o",
+        linestyle="-",
+        color=Colors.DARK_PINK.value,
+        label="Von Neumann",
+    )
+    plt.plot(
+        bond_probabilities,
+        percolations_moore,
+        marker="o",
+        linestyle="-",
+        color=Colors.LIGHT_PINK.value,
+        label="Moore",
+    )
+    plt.xlabel("Bond Probability")
+    plt.ylabel("Fraction of Simulations with Percolation")
+    plt.title("Plot of Percolation vs Bond Probability")
+    plt.legend()
+    plt.grid(True)
+
+    if save:
+        plt.savefig(filename, dpi=300)
+
+    plt.show()
+
+
+def plot_percolation_vs_bond_probability_both_initial(
+    grid_size,
+    density,
+    steps=1000,
+    num_simulations=100,
+    save=False,
+    filename="percolation_bond_probability_both_initial.png",
+):
+    """
+    Runs multiple simulations for 20 different Bond Probabilitys and a given density for both positions of the initial spreader
+    (center and edge), calculates the probability of a percolation occuring, and plots it.
+
+    Parameters:
+        grid_size (int): The size of the grid for the simulations.
+        density (float): A density value to use for the simulations.
+        steps (int, optional): The max number of time steps for each simulation. Defaults to 1000.
+        num_simulations (int, optional): The number of simulations to run for each density. Defaults to 100.
+        save (bool, optional):  Whether to save the plot as an png file. Default is False.
+        filename (str, optional): The name of the file to save the plot if `save` is True.
+    """
+    bond_probabilities = np.linspace(0.1, 1, 20)
+    percolations_vn = []
+    percolations_moore = []
+
+    print("Starting simulation for different bond probabilities...")
+
+    for bond_probability in tqdm(
+        bond_probabilities, desc="Simulating bond probabilities Von Neumann"
+    ):
+        if 0.3 <= bond_probability <= 0.8:
+            percolations_vn.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations * 2,
+                    flag_center=1,
+                    flag_neighbors=0,
+                )
+            )
+        else:
+            percolations_vn.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations,
+                    flag_center=1,
+                    flag_neighbors=0,
+                )
+            )
+
+    for bond_probability in tqdm(
+        bond_probabilities, desc="Simulating bond probabilities Moore"
+    ):
+        if 0.3 <= bond_probability <= 0.8:
+            percolations_moore.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations * 2,
+                    flag_center=0,
+                    flag_neighbors=0,
+                )
+            )
+        else:
+            percolations_moore.append(
+                simulate_density(
+                    grid_size,
+                    density,
+                    bond_probability,
+                    steps,
+                    num_simulations,
+                    flag_center=0,
+                    flag_neighbors=0,
+                )
+            )
+
+    print("Simulations completed.")
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(
+        bond_probabilities,
+        percolations_vn,
+        marker="o",
+        linestyle="-",
+        color=Colors.DARK_PINK.value,
+        label="Center",
+    )
+    plt.plot(
+        bond_probabilities,
+        percolations_moore,
+        marker="o",
+        linestyle="-",
+        color=Colors.LIGHT_PINK.value,
+        label="Edge",
     )
     plt.xlabel("Bond Probability")
     plt.ylabel("Fraction of Simulations with Percolation")
